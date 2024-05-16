@@ -1,5 +1,6 @@
 import { AxiosHttpClientAdapter, parseHttpResponse } from '../axios/AxiosHttpClientAdapter'
 import { makeMarketplaceBaseUrl } from './make-marketplace-base-url'
+import { useCacheStore } from '@/stores/cache-storage'
 
 /**
  * Retrieves a list of solutions from the marketplace API based on the specified category, search query, and API context.
@@ -12,6 +13,14 @@ import { makeMarketplaceBaseUrl } from './make-marketplace-base-url'
  */
 export const listSolutionsService = async ({ category = '', search = '', type = 'onboarding' }) => {
   const searchParams = makeSearchParams({ category, search })
+  const chacheStore = useCacheStore()
+
+  if (chacheStore.checkAndFetchDataIfExpired(type)) {
+    const cacheData = chacheStore.cachedData
+
+    return cacheData[type]
+  }
+
   let httpResponse = await AxiosHttpClientAdapter.request({
     url: `${makeMarketplaceBaseUrl()}/solution/?${searchParams.toString()}`,
     method: 'GET',
@@ -19,7 +28,11 @@ export const listSolutionsService = async ({ category = '', search = '', type = 
       'Mktp-Api-Context': type
     }
   })
+
   httpResponse = adapt(httpResponse)
+
+  chacheStore.cacheData(type, httpResponse.body)
+
   return parseHttpResponse(httpResponse)
 }
 
@@ -56,7 +69,6 @@ const adapt = (httpResponse) => {
       : []
 
   parsedServices.sort((serviceA, serviceB) => serviceA.name.localeCompare(serviceB.name))
-
   return {
     body: parsedServices,
     statusCode: httpResponse.statusCode
