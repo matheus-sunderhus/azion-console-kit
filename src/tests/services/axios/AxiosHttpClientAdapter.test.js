@@ -77,11 +77,10 @@ describe('AxiosHttpClientAdapter', () => {
     })
   })
 
-  it('should return the cachedData' , async () => {
+  it('should return the cachedData', async () => {
     const { sut, mockAxios } = makeSut()
 
-    store.setCacheData('test', mockAxios.cachedData);
-
+    store.setCacheData('test', mockAxios.cachedData)
 
     const response = await sut.request(
       {
