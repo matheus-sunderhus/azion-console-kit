@@ -2,48 +2,43 @@ import { defineStore } from 'pinia'
 import { EXPIRY_DURATION } from '@/utils/constants'
 
 // Utility function to handle localStorage operations
-const nameStorage = (key) => `chached-data-${key}`
+const nameStorage = (nameCacheData) => `chached-data-${nameCacheData}`
 
-const getLocalStorageItem = (key) => {
-  const item = localStorage.getItem(nameStorage(key))
+const getLocalStorageItem = (nameCacheData) => {
+  const chachedData = localStorage.getItem(nameStorage(nameCacheData))
 
-  return item ? JSON.parse(item) : null
+  return chachedData ? JSON.parse(chachedData) : null
 }
 
-const setLocalStorageItem = (key, value) => {
-  const newValue = JSON.stringify(value)
-  localStorage.setItem(nameStorage(key), newValue)
+const setLocalStorageItem = (nameCacheData, value) => {
+  const newCachedData = JSON.stringify(value)
+  localStorage.setItem(nameStorage(nameCacheData), newCachedData)
 }
 
 export const useCacheStore = defineStore({
   id: 'cacheStore',
   state: () => ({
-    cachedData: {
-      onboarding: {},
-      browse: {},
-      recommended: {},
-      other: {}
-    }
+    cachedData: {}
   }),
   actions: {
-    cacheData(dataType, data) {
+    setCacheData(nameCacheData, data) {
       if (!data || data.length === 0) return
 
       const now = Date.now()
-      this.cachedData[dataType] = data
+      this.cachedData[nameCacheData] = data
 
       const newCachedData = { createdCachedDataTimestamp: now, data }
-      setLocalStorageItem(dataType, newCachedData)
+      setLocalStorageItem(nameCacheData, newCachedData)
     },
-    checkAndFetchDataIfExpired(dataType) {
-      const cached = getLocalStorageItem(dataType)
+    checkAndFetchDataIfExpired(nameCacheData) {
+      const cached = getLocalStorageItem(nameCacheData)
       if (cached) {
         const { createdCachedDataTimestamp, data } = cached
         const now = Date.now()
 
         if (now - createdCachedDataTimestamp < EXPIRY_DURATION) {
           // Data is not expired, update the cache
-          this.cacheData(dataType, data)
+          this.setCacheData(nameCacheData, data)
           return true
         }
       }

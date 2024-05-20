@@ -4,7 +4,8 @@ import { makeMarketplaceBaseUrl } from './make-marketplace-base-url'
 export const listCategoriesService = async () => {
   let httpResponse = await AxiosHttpClientAdapter.request({
     url: `${makeMarketplaceBaseUrl()}/categories/`,
-    method: 'GET'
+    method: 'GET',
+    nameCacheData: 'categories'
   })
 
   httpResponse = adapt(httpResponse)

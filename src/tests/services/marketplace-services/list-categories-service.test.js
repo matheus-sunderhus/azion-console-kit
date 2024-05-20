@@ -28,7 +28,8 @@ describe('MarketplaceServices', () => {
 
     expect(requestSpy).toHaveBeenCalledWith({
       url: 'marketplace/categories/',
-      method: 'GET'
+      method: 'GET',
+      nameCacheData: 'categories'
     })
   })
 

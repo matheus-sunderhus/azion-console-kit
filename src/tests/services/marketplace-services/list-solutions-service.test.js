@@ -1,30 +1,7 @@
 import { AxiosHttpClientAdapter } from '@/services/axios/AxiosHttpClientAdapter'
-import { useCacheStore } from '@/stores/cache-storage'
-// import * as Errors from '@services/axios/errors'
+import * as Errors from '@services/axios/errors'
 import { listSolutionsService } from '@/services/marketplace-services'
-import { describe, beforeEach, expect, it, vi } from 'vitest'
-import { createPinia, setActivePinia } from 'pinia'
-
-const cachedData = [
-  {
-    category: [],
-    dependencies_by_client: [],
-    featured: false,
-    headline: 'JSON Web Token is an Internet standard for creating data with optional signature',
-    id: 9,
-    instanceType: {
-      isTemplate: false,
-      name: 'JWT',
-      referenceId: '123',
-      released: true,
-      new_release: true,
-      slug: 'jwt',
-      solution_reference_id: '123',
-      updated_at: '12/11/20, 13:40PM',
-      vendor: [Object]
-    }
-  }
-]
+import { describe, expect, it, vi } from 'vitest'
 
 const fixtures = {
   solutionSample: {
@@ -66,8 +43,6 @@ const fixtures = {
   }
 }
 
-let store
-
 const makeSut = () => {
   const sut = listSolutionsService
 
@@ -77,12 +52,6 @@ const makeSut = () => {
 }
 
 describe('MarketplaceServices', () => {
-  beforeEach(() => {
-    const pinia = createPinia()
-    setActivePinia(pinia)
-    store = useCacheStore()
-  })
-
   it('should call api with correct params', async () => {
     const requestSpy = vi.spyOn(AxiosHttpClientAdapter, 'request').mockResolvedValueOnce({
       statusCode: 200,
@@ -96,7 +65,8 @@ describe('MarketplaceServices', () => {
     expect(requestSpy).toHaveBeenCalledWith({
       url: `marketplace/solution/?`,
       headers: { 'Mktp-Api-Context': 'onboarding' },
-      method: 'GET'
+      method: 'GET',
+      nameCacheData: 'onboarding'
     })
   })
 
@@ -113,7 +83,8 @@ describe('MarketplaceServices', () => {
     expect(requestSpy).toHaveBeenCalledWith({
       url: `marketplace/solution/?search=Hello`,
       headers: { 'Mktp-Api-Context': 'onboarding' },
-      method: 'GET'
+      method: 'GET',
+      nameCacheData: 'onboarding'
     })
   })
 
@@ -130,7 +101,8 @@ describe('MarketplaceServices', () => {
     expect(requestSpy).toHaveBeenCalledWith({
       url: `marketplace/solution/?category=security`,
       headers: { 'Mktp-Api-Context': 'onboarding' },
-      method: 'GET'
+      method: 'GET',
+      nameCacheData: 'onboarding'
     })
   })
 
@@ -147,7 +119,8 @@ describe('MarketplaceServices', () => {
     expect(requestSpy).toHaveBeenCalledWith({
       url: `marketplace/solution/?`,
       headers: { 'Mktp-Api-Context': 'onboarding' },
-      method: 'GET'
+      method: 'GET',
+      nameCacheData: 'onboarding'
     })
   })
 
@@ -179,49 +152,43 @@ describe('MarketplaceServices', () => {
     ])
   })
 
-  // it.each([
-  //   {
-  //     statusCode: 400,
-  //     expectedError: new Errors.InvalidApiRequestError().message
-  //   },
-  //   {
-  //     statusCode: 401,
-  //     expectedError: new Errors.InvalidApiTokenError().message
-  //   },
-  //   {
-  //     statusCode: 403,
-  //     expectedError: new Errors.PermissionError().message
-  //   },
-  //   {
-  //     statusCode: 404,
-  //     expectedError: new Errors.NotFoundError().message
-  //   },
-  //   {
-  //     statusCode: 500,
-  //     expectedError: new Errors.InternalServerError().message
-  //   },
-  //   {
-  //     statusCode: 'unmappedStatusCode',
-  //     expectedError: new Errors.UnexpectedError().message
-  //   }
-  // ])(
-  //   'should throw when request fails with statusCode $statusCode',
-  //   async ({ statusCode, expectedError }) => {
-  //     vi.spyOn(AxiosHttpClientAdapter, 'request').mockResolvedValueOnce({
-  //       statusCode,
-  //       body: []
-  //     })
-  //     const { sut } = makeSut()
+  it.each([
+    {
+      statusCode: 400,
+      expectedError: new Errors.InvalidApiRequestError().message
+    },
+    {
+      statusCode: 401,
+      expectedError: new Errors.InvalidApiTokenError().message
+    },
+    {
+      statusCode: 403,
+      expectedError: new Errors.PermissionError().message
+    },
+    {
+      statusCode: 404,
+      expectedError: new Errors.NotFoundError().message
+    },
+    {
+      statusCode: 500,
+      expectedError: new Errors.InternalServerError().message
+    },
+    {
+      statusCode: 'unmappedStatusCode',
+      expectedError: new Errors.UnexpectedError().message
+    }
+  ])(
+    'should throw when request fails with statusCode $statusCode',
+    async ({ statusCode, expectedError }) => {
+      vi.spyOn(AxiosHttpClientAdapter, 'request').mockResolvedValueOnce({
+        statusCode,
+        body: []
+      })
+      const { sut } = makeSut()
 
-  //     const response = sut({})
+      const response = sut({})
 
-  //     expect(response).rejects.toBe(expectedError)
-  //   }
-  // )
-
-  it('should cache data properly - onboarding data', () => {
-    store.cacheData('onboarding', cachedData)
-
-    expect(store.cachedData.onboarding).toStrictEqual(cachedData)
-  })
+      expect(response).rejects.toBe(expectedError)
+    }
+  )
 })

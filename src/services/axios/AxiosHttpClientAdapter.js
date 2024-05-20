@@ -1,4 +1,6 @@
 import defaultApi from './makeApi'
+import { useCacheStore } from '@/stores/cache-storage'
+
 import {
   InternalServerError,
   InvalidApiRequestError,
@@ -35,10 +37,20 @@ export const parseHttpResponse = (httpResponse) => {
 
 export class AxiosHttpClientAdapter {
   static async request(
-    { url, method, headers, body, signal },
+    { url, method, headers, body, signal, nameCacheData },
     axios = defaultApi(import.meta.env.VITE_PERSONAL_TOKEN)
   ) {
     let axiosResponse
+
+    const chacheStore = useCacheStore()
+
+    if (nameCacheData) {
+      if (chacheStore.checkAndFetchDataIfExpired(nameCacheData)) {
+        const cacheData = chacheStore.cachedData
+
+        return cacheData[nameCacheData]
+      }
+    }
 
     try {
       axiosResponse = await axios.request({
@@ -51,6 +63,10 @@ export class AxiosHttpClientAdapter {
     } catch (error) {
       const axiosError = error
       axiosResponse = axiosError.response
+    }
+
+    if (nameCacheData) {
+      chacheStore.setCacheData(nameCacheData, AxiosHttpClientAdapter.adapt(axiosResponse))
     }
 
     return AxiosHttpClientAdapter.adapt(axiosResponse)
