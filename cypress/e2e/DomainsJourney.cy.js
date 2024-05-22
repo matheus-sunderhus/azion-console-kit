@@ -31,8 +31,6 @@ describe('Domain journey', () => {
   it('Should be able to visit home page and create,edit, list and delete an domain', () => {
     // Go to domains
     cy.visit('/')
-    cy.getByTestId('create-button').click()
-    cy.get('.p-dialog-header-icon > .p-icon > path').click()
     cy.get('.top-0 > .w-full > .gap-3 > .p-button').click()
     cy.get('#pv_id_18_2 > .p-menuitem-content > .flex').click()
     cy.get('.p-datatable-header > .flex-wrap > .p-button > .p-button-label').click()
