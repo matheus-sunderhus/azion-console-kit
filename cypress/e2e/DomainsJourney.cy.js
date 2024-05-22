@@ -25,20 +25,23 @@ const searchDomainByText = (searchText) => {
 describe('Domain journey', () => {
   beforeEach(() => {
     cy.loginWithEmail(Cypress.env('username'), Cypress.env('password'))
+    cy.intercept('https://storage.googleapis.com/*', {
+      statusCode: 200
+    })
   })
   const domainNameMock = `domain-${Date.now()}`
 
-  it('Should be able to visit home page and create,edit, list and delete an domain', () => {
+  it.only('Should be able to visit home page and create,edit, list and delete an domain', () => {
     // Go to domains
     cy.visit('/')
     cy.get('.top-0 > .w-full > .gap-3 > .p-button').click()
-    cy.get('#pv_id_18_2 > .p-menuitem-content > .flex').click()
+    cy.getByTestId('menu-item-Domains').click()
     cy.get('.p-datatable-header > .flex-wrap > .p-button > .p-button-label').click()
     //Fill domain data
     cy.get('#name').type(domainNameMock)
     cy.get('#edge_application > .p-dropdown-label').click()
     cy.get('#edge_application_0').click()
-    cy.get('#cnameAccessOnly > .p-inputswitch-slider').click()
+    cy.get('.p-inputswitch-slider').first().click()
     cy.get('.max-md\\:w-full > .p-button-label').click()
     // Submit
     cy.contains('Your domain has been created', { timeout: 20000 })

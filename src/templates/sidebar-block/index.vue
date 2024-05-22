@@ -41,6 +41,7 @@
           class="flex h-9"
           v-bind="props.action"
           @click="redirectToRoute(item.to)"
+          :data-testid="`menu-item-${label}`"
         >
           <span v-bind="props.icon" />
           <span v-bind="props.label">{{ label }}</span>
