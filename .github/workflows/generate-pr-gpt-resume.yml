@@ -7,6 +7,8 @@ on:
     branches:
       - dev
 
+permissions: read-all
+
 jobs:
   update-pr-description:
     runs-on: ubuntu-latest
