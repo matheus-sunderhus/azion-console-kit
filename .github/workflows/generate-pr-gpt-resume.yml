@@ -42,11 +42,16 @@ jobs:
             -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Summarize the following commit messages: ${COMMIT_MESSAGES}"}], "max_tokens": 200, "stop": ["\n\n"]}' \
             -s -o response.json
 
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+
       - name: update-pull-request
         uses: kt3k/update-pr-description@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          destination_branch: dev
+          destination_branch: ${{ steps.extract_branch.outputs.branch }}
           pr_body: |
             **Commit Summary:** 
             ${JSON.parse(fs.readFileSync('response.json')).choices[0].message.content}
