@@ -44,8 +44,8 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"model\": \"gpt-3.5-turbo\", \"messages\": [{\"role\": \"user\", \"content\": \"Summarize the following commit messages: ${COMMIT_MESSAGES}\"}], \"max_tokens\": 200, \"stop\": [\"\n\n\"]}" \
             -s)
-          summary=$(echo "$response" | jq -r '.choices[0].message.content')
-          echo "RESPONSE=$(echo "$summary" | sed 's/[[:cntrl:]]//g')" >> $GITHUB_ENV
+          summary=$(echo "$response" | jq -r '.choices[0].message.content' | tr -d '\n')
+          echo "RESPONSE=$summary" >> $GITHUB_ENV
 
       - name: Update PR description with summary
         uses: actions/github-script@v6
