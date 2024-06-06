@@ -47,11 +47,14 @@ jobs:
         run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
         id: extract_branch
 
-      - name: update-pull-request
-        uses: kt3k/update-pr-description@v2
+
+      - name: Update PR description with GPT
+        uses: actions/github-script@v6
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          destination_branch: ${{ steps.extract_branch.outputs.branch }}
-          pr_body: |
-            **Commit Summary:** 
-            ${JSON.parse(fs.readFileSync('response.json')).choices[0].message.content}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `**Commit Summary:** ${JSON.parse(fs.readFileSync('response.json')).choices[0].message.content}`
+            })
