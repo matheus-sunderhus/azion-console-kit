@@ -46,6 +46,6 @@ jobs:
         uses: kt3k/update-pr-description@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-           pr_body: |
+          pr_body: |
             **Commit Summary:** 
             ${JSON.parse(fs.readFileSync('response.json')).choices[0].message.content}
