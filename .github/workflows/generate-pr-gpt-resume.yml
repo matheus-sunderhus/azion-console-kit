@@ -47,8 +47,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const octokit = github.getOctokit('${GITHUB_TOKEN}');
-            octokit.issues.updatePullRequest({
+            github.issues.updatePullRequest({
               pull_request_number: context.pullRequest.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
