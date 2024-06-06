@@ -42,12 +42,6 @@ jobs:
             -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Summarize the following commit messages: ${COMMIT_MESSAGES}"}], "max_tokens": 200, "stop": ["\n\n"]}' \
             -s -o response.json
 
-      - name: Extract branch name
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
-
-
       - name: Update PR description with GPT
         uses: actions/github-script@v6
         with:
@@ -56,5 +50,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `**Commit Summary:** ${JSON.parse(fs.readFileSync('response.json')).choices[0].message.content}`
+              body: `**Commit Summary:** ${JSON.parse(readFile('response.json')).choices[0].message.content}`
             })
