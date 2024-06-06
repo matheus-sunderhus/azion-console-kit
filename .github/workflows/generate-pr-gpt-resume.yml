@@ -35,11 +35,11 @@ jobs:
         run: |
           response=$(curl -X POST \
             https://api.openai.com/v1/chat/completions \
-            -H 'Authorization: Bearer $OPENAI_API_KEY' \
-            -H 'Content-Type: application/json' \
-            -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Summarize the following commit messages: ${COMMIT_MESSAGES}"}], "max_tokens": 200, "stop": ["\n\n"]}' \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"model\": \"gpt-3.5-turbo\", \"messages\": [{\"role\": \"user\", \"content\": \"Summarize the following commit messages: ${COMMIT_MESSAGES}\"}], \"max_tokens\": 200, \"stop\": [\"\n\n\"]}" \
             -s)
-          echo "RESPONSE=$response" >> $GITHUB_ENV
+          echo "RESPONSE=$(echo $response | jq -r '.choices[0].message.content')" >> $GITHUB_ENV
 
       - name: Update PR description with summary
         uses: actions/github-script@v6
@@ -49,5 +49,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `**Commit Summary:** ${JSON.parse(env.RESPONSE).choices[0].message.content}`
+              body: `**Commit Summary:** ${env.RESPONSE}`
             })
