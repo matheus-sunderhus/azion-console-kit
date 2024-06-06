@@ -31,40 +31,32 @@ jobs:
       - name: Run tests
         run: yarn test:unit:headless
 
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v3
+      - name: Get commit messages
+        run: |
+          commits=$(git log --format=%s ${GITHUB_SHA}..${GITHUB_EVENT_PULL_REQUEST_HEAD})
+          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
+          echo "$commits" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Generate summary using OpenAI ChatGPT API
+        env:
+          COMMIT_MESSAGES: ${{ env.COMMIT_MESSAGES }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          curl -X POST \
+            https://api.openai.com/v1/chat/completions \
+            -H 'Authorization: Bearer $OPENAI_API_KEY' \
+            -H 'Content-Type: application/json' \
+            -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Summarize the following commit messages: ${COMMIT_MESSAGES}"}], "max_tokens": 200, "stop": ["\n\n"]}' \
+            -s -o response.json
+
+      - name: Update PR description
+        uses: actions/github-script@v6
         with:
-          name: coverage_unit_report
-          path: |
-            coverage/lcov.info
-            coverage/sonar-report.xml
-          retention-days: 1
-
-  # sonarqube-analysis:
-  #   name: SonarQube Analysis
-  #   if: ${{ github.actor != 'dependabot[bot]' }}
-  #   needs: [run-tests]
-  #   runs-on: [self-hosted, sonarqube, stage]
-  #   timeout-minutes: 5
-  #   container:
-  #     image: ubuntu:22.04
-
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
-
-  #     - name: Download coverage reports
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: coverage_unit_report
-
-  #     - name: Fix code coverage paths - lcov.info
-  #       run: |
-  #         sed -i 's:/__w/azion-platform-kit/azion-platform-kit/:/github/workspace/:' lcov.info
-  #         sed -i 's:/__w/azion-platform-kit/azion-platform-kit/:/github/workspace/:' sonar-report.xml
-
-  #     - name: SonarQube Scan
-  #       uses: sonarsource/sonarqube-scan-action@master
-  #       env:
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.issues.updatePullRequest({
+              pull_request_number: context.pullRequest.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              bo
