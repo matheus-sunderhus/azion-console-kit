@@ -13,6 +13,6 @@ describe('makeAzionAiBaseUrl', () => {
 
     const result = sut()
 
-    expect(result).toEqual('http://localhost:8080')
+    expect(result).toEqual('https://ai-chatbot.azion.com')
   })
 })

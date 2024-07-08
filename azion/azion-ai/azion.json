@@ -1,0 +1,162 @@
+{
+  "name": "console-azion-ai",
+  "bucket": "console-ai",
+  "preset": "vue",
+  "mode": "deliver",
+  "env": "production",
+  "prefix": "20240708162548",
+  "not-first-run": true,
+  "function": {
+    "id": 26303,
+    "name": "__DEFAULT__",
+    "file": ".edge/worker.js",
+    "args": "azion/azion-ai/args.json",
+    "instance-id": 25428,
+    "instance-name": "__DEFAULT__",
+    "cache-id": 0
+  },
+  "application": {
+    "id": 1720469992,
+    "name": "__DEFAULT__"
+  },
+  "domain": {
+    "id": 1720468444,
+    "name": "console-azion-ai",
+    "domain_name": "uvt6ietthk.map.azionedge.net",
+    "url": "https://uvt6ietthk.map.azionedge.net"
+  },
+  "rt-purge": {
+    "purge_on_publish": true
+  },
+  "origin": [
+    {
+      "origin-id": 140551,
+      "origin-key": "9bc43b11-09e3-4cf0-a5d7-9a871dc692c0",
+      "name": "origin-storage-default"
+    },
+    {
+      "origin-id": 140552,
+      "origin-key": "c0ff234c-e649-482e-9895-364cd07ae75e",
+      "name": "origin-manager"
+    },
+    {
+      "origin-id": 140553,
+      "origin-key": "a65c569e-c4d2-4794-aa10-b91d24491911",
+      "name": "origin-vcs"
+    },
+    {
+      "origin-id": 140554,
+      "origin-key": "8391f19f-7989-4941-b999-d4333a79ca50",
+      "name": "origin-cities"
+    },
+    {
+      "origin-id": 140555,
+      "origin-key": "cd0f621c-0c46-4ad7-b829-0510bc8119ed",
+      "name": "origin-sso"
+    },
+    {
+      "origin-id": 140556,
+      "origin-key": "420de5c7-63d6-48d6-888f-1f4b5d933b1b",
+      "name": "origin-api"
+    },
+    {
+      "origin-id": 140557,
+      "origin-key": "642a296f-4962-434c-bbaf-7edaa484106d",
+      "name": "origin-script-runner"
+    }
+  ],
+  "rules-engine": {
+    "created": false,
+    "rules": [
+      {
+        "id": 265519,
+        "name": "Apply Common Configuration for All Requests",
+        "phase": "request"
+      },
+      {
+        "id": 265520,
+        "name": "Set Storage Origin for All Requests",
+        "phase": "request"
+      },
+      {
+        "id": 265521,
+        "name": "Deliver Static Assets from Storage",
+        "phase": "request"
+      },
+      {
+        "id": 265522,
+        "name": "Redirect All Non-Asset Requests to to index.html",
+        "phase": "request"
+      },
+      {
+        "id": 265523,
+        "name": "Route API Default Requests to API Origin",
+        "phase": "request"
+      },
+      {
+        "id": 265524,
+        "name": "Route Specific API Services to Marketplace Origin",
+        "phase": "request"
+      },
+      {
+        "id": 265525,
+        "name": "Route Specific API Services to Template Engine Origin",
+        "phase": "request"
+      },
+      {
+        "id": 265526,
+        "name": "Route Specific API Services to Script Runner Origin",
+        "phase": "request"
+      },
+      {
+        "id": 265527,
+        "name": "Route Version Control System API to VCS Origin",
+        "phase": "request"
+      },
+      {
+        "id": 265528,
+        "name": "Route User Authentication and Account Management to SSO Origin",
+        "phase": "request"
+      },
+      {
+        "id": 265529,
+        "name": "Route GraphQL City Queries to Cities Origin",
+        "phase": "request"
+      },
+      {
+        "id": 265530,
+        "name": "Rewrite _azrt Cookie",
+        "phase": "response"
+      },
+      {
+        "id": 265531,
+        "name": "Rewrite azsid Cookie",
+        "phase": "response"
+      },
+      {
+        "id": 265532,
+        "name": "Rewrite _azat Cookie",
+        "phase": "response"
+      },
+      {
+        "id": 265533,
+        "name": "Secure Headers",
+        "phase": "response"
+      }
+    ]
+  },
+  "cache-settings": [
+    {
+      "id": 159023,
+      "name": "Statics - Cache"
+    },
+    {
+      "id": 159024,
+      "name": "Marketplace - Cache"
+    },
+    {
+      "id": 159025,
+      "name": "Cities - Cache"
+    }
+  ]
+}

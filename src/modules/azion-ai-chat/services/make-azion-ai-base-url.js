@@ -1,3 +1,3 @@
 export const makeAzionAiBaseUrl = () => {
-  return 'http://localhost:8080'
+  return 'https://ai-chatbot.azion.com'
 }
