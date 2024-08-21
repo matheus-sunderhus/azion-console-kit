@@ -1,0 +1,35 @@
+name: Run and Publish Release
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+env:
+    HUSKY: 0
+
+permissions:
+  contents: read # for checkout
+jobs:
+  release:
+    permissions:
+      contents: write # to be able to publish a GitHub release
+      issues: write # to be able to comment on released issues
+      pull-requests: write # to be able to comment on released pull requests
+      id-token: write # to enable use of OIDC for npm provenance
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Install packages
+        run: yarn ci
+
+      - name: Install CI/CD Semantic Release plugins
+        run: yarn add semantic-release @semantic-release/git @semantic-release/github @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator --dev
+
+      - name: Generate Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
