@@ -34,5 +34,6 @@ export default {
   parserOpts: {
     headerPattern: /^(\[UXE-.*])?\s?(\w+):\s(.*)$/,
     headerCorrespondence: ['scope', 'type', 'subject']
-  }
+  },
+  repositoryUrl: 'https://github.com/matheus-sunderhus/azion-console-kit.git'
 }
