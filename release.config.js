@@ -17,10 +17,14 @@ export default {
     '@semantic-release/commit-analyzer',
     '@semantic-release/release-notes-generator',
     '@semantic-release/changelog',
-    '@semantic-release/github',
+    [
+      '@semantic-release/github',
+      {
+        assets: ['dist/**']
+      }
+    ],
     '@semantic-release/git'
   ],
-  preset: 'vue',
   releaseRules: [
     { type: 'feat', release: 'minor' },
     { type: 'fix', release: 'patch' },
@@ -34,5 +38,6 @@ export default {
   parserOpts: {
     headerPattern: /^(\[UXE-.*])?\s?(\w+):\s(.*)$/,
     headerCorrespondence: ['scope', 'type', 'subject']
-  }
+  },
+  repositoryUrl: 'https://github.com/matheus-sunderhus/azion-console-kit.git'
 }
