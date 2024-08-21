@@ -28,10 +28,10 @@ jobs:
           node-version: 20
       
       - name: Install packages
-        run: yarn ci
+        run: yarn install
 
       - name: Install CI/CD Semantic Release plugins
-        run: yarn add semantic-release @semantic-release/git @semantic-release/github @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator --dev
+        run: yarn add semantic-release @semantic-release/git @semantic-release/github @semantic-release/changelog @semantic-release/commit-analyzer @semantic-release/release-notes-generator
 
       - name: Generate Release
         env:
