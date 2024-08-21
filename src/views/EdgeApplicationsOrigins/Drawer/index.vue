@@ -94,7 +94,7 @@
     hmacAccessKey: '',
     hmacSecretKey: '',
     bucketName: null,
-    prefix: null
+    prefix: ''
   })
 
   const createFormDrawer = ref('')
@@ -219,7 +219,7 @@
     toast.add({
       closable: true,
       severity: 'success',
-      summary: 'Origin key copied to clipboard!'
+      summary: 'Successfully copied!'
     })
   }
 

@@ -1,12 +1,11 @@
 <script setup>
-  import Illustration from '@/assets/svg/illustration-layers'
   import EmptyResultsBlock from '@/templates/empty-results-block'
   import { columnBuilder } from '@/templates/list-table-block/columns/column-builder'
   import DrawerRulesEngine from '@/views/EdgeApplicationsRulesEngine/Drawer'
-  import ListTableBlock from '@/templates/list-table-block/no-header'
+  import ListTableBlock from '@/templates/list-table-block'
   import PrimeButton from 'primevue/button'
   import SelectButton from 'primevue/selectbutton'
-  import { computed, ref, watch } from 'vue'
+  import { computed, ref } from 'vue'
 
   defineOptions({ name: 'list-edge-applications-device-groups-tab' })
 
@@ -75,8 +74,15 @@
     }
   })
 
+  const PHASE_OPTIONS = ['Request phase', 'Response phase']
+  const PARSE_PHASE = {
+    'Request phase': 'request',
+    'Response phase': 'response'
+  }
+  const drawerRulesEngineRef = ref('')
   const hasContentToList = ref(true)
-
+  const listRulesEngineRef = ref(null)
+  const selectedPhase = ref('Request phase')
   const getColumns = computed(() => {
     return [
       {
@@ -100,6 +106,7 @@
         header: 'Status',
         type: 'component',
         filterPath: 'status.content',
+        sortField: 'status.content',
         component: (columnData) => {
           return columnBuilder({
             data: columnData,
@@ -118,16 +125,10 @@
     hasContentToList.value = event
   }
 
-  const phaseOptions = ref(['Request phase', 'Response phase'])
-  const selectedPhase = ref('Request phase')
-  const parsePhase = {
-    'Request phase': 'request',
-    'Response phase': 'response'
-  }
   const listRulesEngineWithDecorator = async () => {
     return props.listRulesEngineService({
       id: props.edgeApplicationId,
-      phase: parsePhase[selectedPhase.value]
+      phase: PARSE_PHASE[selectedPhase.value]
     })
   }
 
@@ -146,24 +147,13 @@
     return props.reorderRulesEngine(tableData, props.edgeApplicationId)
   }
 
-  const listRulesEngineRef = ref(null)
-  watch(selectedPhase, () => {
-    listRulesEngineRef.value.reload()
-  })
-
   const reloadList = () => {
-    if (hasContentToList.value) {
-      listRulesEngineRef.value.reload()
-      return
-    }
-    hasContentToList.value = true
+    listRulesEngineRef.value.reload()
   }
 
-  const drawerRulesEngineRef = ref('')
-
   const openCreateRulesEngineDrawerByPhase = () => {
-    parsePhase[selectedPhase.value]
-    drawerRulesEngineRef.value.openDrawerCreate(parsePhase[selectedPhase.value])
+    PARSE_PHASE[selectedPhase.value]
+    drawerRulesEngineRef.value.openDrawerCreate(PARSE_PHASE[selectedPhase.value])
   }
 
   const openEditRulesEngineDrawer = (item) => {
@@ -178,43 +168,52 @@
   const removeReorderForRequestPhaseFirstItem = computed(
     () => selectedPhase.value === 'Response phase'
   )
+
+  const actions = [
+    {
+      type: 'delete',
+      title: 'rule',
+      icon: 'pi pi-trash',
+      service: deleteRulesEngineWithDecorator
+    }
+  ]
 </script>
 
 <template>
   <DrawerRulesEngine
     ref="drawerRulesEngineRef"
-    :isApplicationAcceleratorEnabled="props.isApplicationAcceleratorEnabled"
-    :isDeliveryProtocolHttps="props.isDeliveryProtocolHttps"
-    :isImageOptimizationEnabled="props.isImageOptimizationEnabled"
-    :listEdgeApplicationFunctionsService="props.listEdgeApplicationFunctionsService"
-    :listOriginsService="props.listOriginsService"
-    :listCacheSettingsService="props.listCacheSettingsService"
-    :edgeApplicationId="props.edgeApplicationId"
-    :createRulesEngineService="props.createRulesEngineService"
-    :editRulesEngineService="props.editRulesEngineService"
-    :loadRulesEngineService="props.loadRulesEngineService"
-    :documentationService="props.documentationService"
-    :hideApplicationAcceleratorInDescription="props.hideApplicationAcceleratorInDescription"
-    :isEdgeFunctionEnabled="props.isEdgeFunctionEnabled"
+    :isApplicationAcceleratorEnabled="isApplicationAcceleratorEnabled"
+    :isDeliveryProtocolHttps="isDeliveryProtocolHttps"
+    :isImageOptimizationEnabled="isImageOptimizationEnabled"
+    :listEdgeApplicationFunctionsService="listEdgeApplicationFunctionsService"
+    :listOriginsService="listOriginsService"
+    :listCacheSettingsService="listCacheSettingsService"
+    :edgeApplicationId="edgeApplicationId"
+    :createRulesEngineService="createRulesEngineService"
+    :editRulesEngineService="editRulesEngineService"
+    :loadRulesEngineService="loadRulesEngineService"
+    :documentationService="documentationService"
+    :hideApplicationAcceleratorInDescription="hideApplicationAcceleratorInDescription"
+    :isEdgeFunctionEnabled="isEdgeFunctionEnabled"
     @onSuccess="reloadList"
     data-testid="rules-engine-drawer"
   />
   <ListTableBlock
     ref="listRulesEngineRef"
-    pageTitleDelete="rule"
     :reorderableRows="true"
     :columns="getColumns"
     :onReorderService="reorderRulesEngineWithDecorator"
     :editInDrawer="openEditRulesEngineDrawer"
     :listService="listRulesEngineWithDecorator"
-    :deleteService="deleteRulesEngineWithDecorator"
     @on-load-data="handleLoadData"
     :pt="{
       thead: { class: !hasContentToList && 'hidden' }
     }"
-    emptyListMessage="No rules have been created."
+    emptyListMessage="No rules found."
     :isReorderAllEnabled="removeReorderForRequestPhaseFirstItem"
     data-testid="rules-engine-list"
+    :actions="actions"
+    isTabs
   >
     <template #addButton>
       <div
@@ -223,7 +222,8 @@
       >
         <SelectButton
           v-model="selectedPhase"
-          :options="phaseOptions"
+          @change="reloadList"
+          :options="PHASE_OPTIONS"
           :unselectable="true"
           data-testid="rules-engine-select-phase"
         />
@@ -238,10 +238,11 @@
 
     <template #noRecordsFound>
       <EmptyResultsBlock
+        v-if="!hasContentToList"
         :title="titleEmptyState"
         :description="descriptionEmptyState"
         :createButtonLabel="selectedPhase"
-        :documentationService="props.documentationService"
+        :documentationService="documentationService"
         :inTabs="true"
         :noBorder="true"
         data-testid="rules-engine-empty-results"
@@ -255,9 +256,6 @@
             label="Rule"
             data-testid="rules-engine-empty-results-create-button"
           />
-        </template>
-        <template #illustration>
-          <Illustration />
         </template>
       </EmptyResultsBlock>
     </template>

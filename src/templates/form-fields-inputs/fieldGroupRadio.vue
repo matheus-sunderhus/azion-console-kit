@@ -1,7 +1,7 @@
 <script setup>
   import FieldRadioBlock from '@/templates/form-fields-inputs/fieldRadioBlock'
   import { useField } from 'vee-validate'
-  import { computed, ref, toRefs } from 'vue'
+  import { computed, ref, toRefs, useAttrs } from 'vue'
   import PrimeDivider from 'primevue/divider'
 
   defineOptions({ name: 'FieldGroupRadio' })
@@ -60,11 +60,32 @@
   const showDivider = (position) => {
     return position < pickListSize.value && !props.isCard
   }
+
+  const attrs = useAttrs()
+
+  const customTestId = computed(() => {
+    const id = attrs['data-testid'] || 'field-radio'
+
+    return {
+      label: `${id}__label`,
+      radio: `${id}__radio`,
+      description: `${id}__description`,
+      error: `${id}__error-message`
+    }
+  })
+
+  const radioTestId = (name, nameField, index) => {
+    const remainder = name ?? `${nameField}-radio-${index}`
+    return `${customTestId.value.radio}__${remainder}`
+  }
 </script>
 
 <template>
   <div :class="['flex flex-col gap-2', classStateRoot]">
-    <label class="text-color text-sm font-medium leading-5">
+    <label
+      class="text-color text-base font-medium leading-5"
+      :data-testid="customTestId.label"
+    >
       {{ props.label }}
     </label>
     <div
@@ -84,6 +105,7 @@
           :isCard="props.isCard"
           v-bind="item"
           @onRadioChange="emit('onRadioChange', item.inputValue)"
+          :data-testid="radioTestId(item.name, props.nameField, index)"
         >
           <template #footer>
             <slot
@@ -101,11 +123,13 @@
     <small
       class="text-xs text-color-secondary font-normal leading-5"
       v-if="props.helpText"
+      :data-testid="customTestId.description"
     >
       {{ props.helpText }}
     </small>
     <small
       v-if="errorMessage"
+      :data-testid="customTestId.error"
       class="p-error text-xs font-normal leading-tight"
     >
       {{ errorMessage }}

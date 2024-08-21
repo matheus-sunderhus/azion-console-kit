@@ -6,6 +6,7 @@
   import FieldDropdown from '@/templates/form-fields-inputs/fieldDropdown'
   import { useField } from 'vee-validate'
   import { computed, onMounted, ref } from 'vue'
+  import LabelBlock from '@/templates/label-block'
 
   const props = defineProps({
     listCountriesService: {
@@ -54,11 +55,13 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Name *"
+          label="Name"
+          required
           name="name"
           placeholder="My Network List"
           :value="name"
           description="Give a unique and descriptive name to identify the network list."
+          data-testid="network-list-form__name"
         />
       </div>
     </template>
@@ -80,6 +83,7 @@
           :value="networkListType"
           appendTo="self"
           description="Each list type accepts different values."
+          data-testid="network-list-form__type"
         />
       </div>
       <div
@@ -87,11 +91,13 @@
         v-if="isAsnNetWorkType"
       >
         <FieldTextArea
-          label="List *"
+          label="List"
+          required
           placeholder="1234&#10;4321"
           name="itemsValues"
           rows="2"
           :value="itemsValues"
+          data-testid="network-list-form__asn-list"
           description="Separate each ASN value by using a new line. Duplicated entries are automatically
           removed."
         />
@@ -101,8 +107,8 @@
         v-if="isIpCidrNetworkType"
       >
         <FieldTextArea
-          label="List *"
-          disabled
+          label="List"
+          required
           placeholder="185.241.208.232&#10;194.26.192.64&#10;171.25.193.25 #comment"
           name="itemsValues"
           rows="16"
@@ -110,18 +116,20 @@
           description="Separate each address value by using a new line and, optionally, use <code>#</code> to add
           a comment and <code>--LT</code> to add a date. Duplicated entries are automatically
           removed."
+          data-testid="network-list-form__ipcidr-list"
         />
       </div>
       <div
         class="flex flex-col w-full sm:max-w-3xl gap-2"
         v-if="isCountriesNetworkType"
       >
-        <label
+        <LabelBlock
           for="select-01"
-          class="text-color text-base font-medium"
-          >Countries *</label
-        >
+          label="Countries"
+          isRequired
+        />
         <MultiSelect
+          id="countriesList"
           v-model="itemsValuesCountry"
           :options="countriesList"
           name="itemsValuesCountry"
@@ -131,6 +139,7 @@
           optionValue="value"
           placeholder="Select Countries"
           :class="{ 'p-invalid': itemsValuesCountryError }"
+          data-testid="network-list-form__countries__multiselect"
           class="w-full"
           display="chip"
         />

@@ -83,7 +83,8 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Name *"
+          label="Name"
+          required
           name="digitalCertificateName"
           placeholder="My digital certificate"
           :value="digitalCertificateName"
@@ -103,6 +104,7 @@
           nameField="certificateType"
           :isCard="true"
           :options="certificateTypeRadioOptions"
+          data-testid="digital-certificate-create-form__certificate-type"
         />
       </div>
     </template>
@@ -116,6 +118,7 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldTextArea
+          data-testid="digital-certificate__certificate-field"
           label="Certificate"
           placeholder="-----BEGIN CERTIFICATE-----&#10;-----END CERTIFICATE-----"
           name="certificate"
@@ -125,6 +128,7 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldTextArea
+          data-testid="digital-certificate__private-key-field"
           label="Private Key"
           placeholder="-----BEGIN PRIVATE KEY-----&#10;-----END PRIVATE KEY-----"
           name="privateKey"
@@ -142,7 +146,9 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Subject Name *"
+          data-testid="digital-certificate__subject-name"
+          label="Subject Name"
+          required
           placeholder="example.com"
           :value="common"
           name="common"
@@ -150,7 +156,9 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Country/Region *"
+          data-testid="digital-certificate__country"
+          label="Country/Region"
+          required
           placeholder="BR"
           :value="country"
           name="country"
@@ -158,7 +166,9 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="State/Province *"
+          data-testid="digital-certificate__state"
+          label="State/Province"
+          required
           placeholder="São Paulo"
           :value="state"
           name="state"
@@ -166,7 +176,9 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="City/Locality *"
+          data-testid="digital-certificate__city"
+          label="City/Locality"
+          required
           placeholder="São Paulo"
           :value="city"
           name="city"
@@ -174,7 +186,9 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Organization *"
+          data-testid="digital-certificate__organization"
+          label="Organization"
+          required
           placeholder="Company Name S.A."
           :value="organization"
           name="organization"
@@ -182,7 +196,9 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Organization Unit *"
+          data-testid="digital-certificate__organization-unit"
+          label="Organization Unit"
+          required
           placeholder="IT Department"
           :value="organizationUnity"
           name="organizationUnity"
@@ -190,7 +206,9 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Email *"
+          data-testid="digital-certificate__email"
+          label="Email"
+          required
           placeholder="example@email.com"
           type="email"
           :value="email"
@@ -209,7 +227,9 @@
       </div>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldTextArea
-          label="Subject Alternative Names (SAN) *"
+          data-testid="digital-certificate__san"
+          label="Subject Alternative Names (SAN)"
+          required
           placeholder="www.example.com&#10;example.net&#10;mail.example.com&#10;support.example.com"
           name="subjectAlternativeNames"
           :value="subjectAlternativeNames"
@@ -227,7 +247,9 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldTextArea
-          label="Certificate *"
+          data-testid="trusted-certificates-form__certificate-field"
+          label="Certificate"
+          required
           placeholder="-----BEGIN CERTIFICATE----&#10;-----END CERTIFICATE-----"
           name="certificate"
           :value="certificate"

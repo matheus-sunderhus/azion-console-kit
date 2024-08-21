@@ -11,12 +11,13 @@
   <div v-if="hasContentToList">
     <ListTableBlock
       ref="listFunctionsEdgeFirewallRef"
+      addButtonLabel="Function Instance"
       :listService="listFunctionsInstance"
-      :deleteService="deleteFunctionsWithDecorator"
       :columns="getColumns"
       :editInDrawer="openEditFunctionDrawer"
-      pageTitleDelete="function instance"
       @on-load-data="handleLoadData"
+      :actions="actions"
+      isTabs
     >
       <template #addButton>
         <PrimeButton
@@ -41,6 +42,7 @@
         severity="secondary"
         icon="pi pi-plus"
         label="Function Instance"
+        data-testid="create_Function Instance_button"
         @click="openCreateFunctionDrawer"
       />
     </template>
@@ -54,7 +56,7 @@
   import Illustration from '@/assets/svg/illustration-layers'
   import EmptyResultsBlock from '@/templates/empty-results-block'
   import PrimeButton from 'primevue/button'
-  import ListTableBlock from '@/templates/list-table-block/no-header'
+  import ListTableBlock from '@/templates/list-table-block'
   import DrawerFunction from './Drawer'
   import { computed, ref } from 'vue'
 
@@ -153,4 +155,13 @@
     }
     hasContentToList.value = true
   }
+
+  const actions = [
+    {
+      type: 'delete',
+      title: 'function instance',
+      icon: 'pi pi-trash',
+      service: deleteFunctionsWithDecorator
+    }
+  ]
 </script>

@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <script setup>
   import { watch, ref, onMounted } from 'vue'
-
+  import LabelBlock from '@/templates/label-block'
   import FormHorizontal from '@/templates/create-form-block/form-horizontal'
   import FieldText from '@/templates/form-fields-inputs/fieldText'
   import PickList from 'primevue/picklist'
@@ -65,7 +65,8 @@
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
           data-testid="teams-permissions-form__name__field-text"
-          label="Name *"
+          label="Name"
+          required
           name="name"
           :value="name"
           description="Give a unique and descriptive name to identify the team."
@@ -80,20 +81,41 @@
   >
     <template #inputs>
       <div class="flex flex-col sm:max-w-3xl w-full gap-2">
-        <label
+        <LabelBlock
           data-testid="teams-permissions-form__permissions-field__label"
-          for="value"
-          class="text-color text-base font-medium"
-        >
-          Permissions *
-        </label>
+          label="Permissions"
+          isRequired
+        />
         <PickList
           data-testid="teams-permissions-form__permissions-field__picklist"
           v-model="permissionsList"
           :pt="{
-            sourceList: { class: ['h-80'] },
-            targetList: { class: ['h-80'] }
+            sourceList: {
+              class: ['h-80'],
+              'data-testid': 'teams-permissions-form__permissions-field-picklist__source-list'
+            },
+            targetList: {
+              class: ['h-80'],
+              'data-testid': 'teams-permissions-form__permissions-field-picklist__target-list'
+            }
           }"
+          :move-all-to-source-props="{
+            'data-testid':
+              'teams-permissions-form__permissions-field-picklist__move-all-to-source-btn'
+          }"
+          :move-all-to-target-props="{
+            'data-testid':
+              'teams-permissions-form__permissions-field-picklist__move-all-to-target-btn'
+          }"
+          :move-to-target-props="{
+            'data-testid': 'teams-permissions-form__permissions-field-picklist__move-to-target-btn'
+          }"
+          :move-to-source-props="{
+            'data-testid': 'teams-permissions-form__permissions-field-picklist__move-to-source-btn'
+          }"
+          source-selection="multiple"
+          target-selection="single"
+          listStyle="height: 400px"
           name="permissions"
           dataKey="id"
           breakpoint="1400px"

@@ -5,6 +5,7 @@
   import { ref, computed } from 'vue'
   import { useAccountStore } from '@/stores/account'
   import FieldGroupRadio from '@/templates/form-fields-inputs/fieldGroupRadio'
+  import LabelBlock from '@/templates/label-block'
   import { useField } from 'vee-validate'
   defineOptions({ name: 'form-fields-drawer-resource' })
 
@@ -77,12 +78,14 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Path *"
+          label="Path"
+          required
           name="name"
           placeholder="/tmp/myresource"
           :disabled="isFieldDisabled"
           :value="name"
           description="The path where the resource will be saved on the edge node."
+          data-testid="edge-service-drawer-form__path-field"
         />
       </div>
       <div class="flex flex-col sm:w-2/5 gap-2">
@@ -94,6 +97,7 @@
           inputClass="w-full"
           name="contentType"
           :value="contentType"
+          data-testid="edge-service-drawer-form__type-field"
         />
       </div>
       <div v-show="isShellScript">
@@ -103,16 +107,16 @@
           nameField="trigger"
           :isCard="false"
           :options="triggerRadioOptions"
+          data-testid="edge-service-drawer-form__type-field"
         />
       </div>
       <div class="flex flex-col w-full sm:max-w-3xl gap-2">
         <div class="flex flex-col gap-2">
           <div class="flex flex-col w-full gap-2">
-            <label
-              for="name"
-              class="text-color text-sm not-italic font-medium leading-5"
-              >Content *</label
-            >
+            <LabelBlock
+              label="Content"
+              isRequired
+            />
             <div class="flex flex-col h-full gap-2">
               <vue-monaco-editor
                 v-model:value="content"
@@ -122,6 +126,7 @@
                 class="min-h-[200px] overflow-clip surface-border border rounded-md"
                 :class="{ 'border-red-500 border': contentError }"
                 :options="editorOptions"
+                data-testid="edge-service-drawer-form__content-field"
               />
               <small
                 v-if="contentError"

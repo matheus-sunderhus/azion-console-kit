@@ -6,15 +6,16 @@
     <template #content>
       <ListTableBlock
         v-if="hasContentToList"
+        @on-before-go-to-edit="checkIfIsEditable"
         :listService="listVariablesService"
-        :deleteService="deleteVariablesService"
         :columns="getColumns"
-        pageTitleDelete="variable"
         addButtonLabel="Variable"
         createPagePath="variables/create"
         editPagePath="variables/edit"
+        ref="refListTable"
         @on-load-data="handleLoadData"
         emptyListMessage="No variables found."
+        :actions="actions"
       />
       <EmptyResultsBlock
         v-else
@@ -32,88 +33,99 @@
   </ContentBlock>
 </template>
 
-<script>
+<script setup>
   import Illustration from '@/assets/svg/illustration-layers.vue'
+  import { onBeforeRouteLeave } from 'vue-router'
   import ContentBlock from '@/templates/content-block'
   import EmptyResultsBlock from '@/templates/empty-results-block'
   import ListTableBlock from '@/templates/list-table-block'
   import { columnBuilder } from '@/templates/list-table-block/columns/column-builder'
   import PageHeadingBlock from '@/templates/page-heading-block'
+  import { h, computed, ref } from 'vue'
 
-  import { h } from 'vue'
+  defineOptions({ name: 'variables-view' })
 
-  export default {
-    name: 'variables-view',
-    components: {
-      ListTableBlock,
-      EmptyResultsBlock,
-      Illustration,
-      ContentBlock,
-      PageHeadingBlock
+  const props = defineProps({
+    listVariablesService: {
+      required: true,
+      type: Function
     },
-    props: {
-      listVariablesService: {
-        required: true,
-        type: Function
-      },
-      deleteVariablesService: {
-        required: true,
-        type: Function
-      },
-      clipboardWrite: {
-        required: true,
-        type: Function
-      },
-      documentationService: {
-        required: true,
-        type: Function
-      }
+    deleteVariablesService: {
+      required: true,
+      type: Function
     },
-    data: () => ({
-      hasContentToList: true
-    }),
-    computed: {
-      getColumns() {
-        return [
-          {
-            field: 'key',
-            header: 'Key'
-          },
-          {
-            field: 'value',
-            header: 'Value',
-            type: 'component',
-            filterPath: 'value.content',
-            component: (columnData) => {
-              if (columnData.isSecret) {
-                return h('span', `${columnData.content}`)
-              } else {
-                return columnBuilder({
-                  data: columnData,
-                  columnAppearance: 'text-with-clipboard',
-                  dependencies: {
-                    copyContentService: this.clipboardWrite
-                  }
-                })
-              }
-            }
-          },
-          {
-            field: 'lastEditor',
-            header: 'Last Editor'
-          },
-          {
-            field: 'updatedAt',
-            sortField: 'updatedAtDate',
-            header: 'Last Update'
-          }
-        ]
-      }
+    clipboardWrite: {
+      required: true,
+      type: Function
     },
-    methods: {
-      handleLoadData(event) {
-        this.hasContentToList = event
-      }
+    documentationService: {
+      required: true,
+      type: Function
     }
+  })
+
+  const enableRedirect = ref(true)
+  const refListTable = ref()
+  const hasContentToList = ref(true)
+  const actions = [
+    {
+      type: 'delete',
+      title: 'variable',
+      icon: 'pi pi-trash',
+      service: props.deleteVariablesService
+    }
+  ]
+
+  const handleLoadData = (event) => {
+    hasContentToList.value = event
   }
+
+  const getColumns = computed(() => {
+    return [
+      {
+        field: 'key',
+        header: 'Key'
+      },
+      {
+        field: 'value',
+        header: 'Value',
+        type: 'component',
+        filterPath: 'value.content',
+        component: (columnData) => {
+          if (columnData.isSecret) {
+            return h('span', `${columnData.content}`)
+          } else {
+            return columnBuilder({
+              data: columnData,
+              columnAppearance: 'text-with-clipboard',
+              dependencies: {
+                copyContentService: props.clipboardWrite
+              }
+            })
+          }
+        }
+      },
+      {
+        field: 'lastEditor',
+        header: 'Last Editor'
+      },
+      {
+        field: 'updatedAt',
+        sortField: 'updatedAtDate',
+        header: 'Last Update'
+      }
+    ]
+  })
+
+  const checkIfIsEditable = (item) => {
+    enableRedirect.value = !item.value.isSecret
+  }
+
+  onBeforeRouteLeave((to, from, next) => {
+    if (enableRedirect.value) {
+      return next()
+    }
+    enableRedirect.value = true
+    return next(false)
+  })
 </script>

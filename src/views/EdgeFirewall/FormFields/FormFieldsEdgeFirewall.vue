@@ -109,8 +109,10 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Name *"
+          label="Name"
+          required
           name="name"
+          data-testid="edge-firewall-form__name-field"
           :value="name"
           placeholder="My edge firewall"
           description="Give a unique and descriptive name to identify the edge firewall."
@@ -135,6 +137,18 @@
           }"
           :showSourceControls="false"
           :showTargetControls="false"
+          :move-all-to-source-props="{
+            'data-testid': 'edge-firewall-form__domain-picklist__move-all-to-source-btn'
+          }"
+          :move-all-to-target-props="{
+            'data-testid': 'edge-firewall-form__domain-picklist__move-all-to-target-btn'
+          }"
+          :move-to-target-props="{
+            'data-testid': 'edge-firewall-form__domain-picklist__move-to-target-btn'
+          }"
+          :move-to-source-props="{
+            'data-testid': 'edge-firewall-form__domain-picklist__move-to-source-btn'
+          }"
         >
           <template #sourceheader>Available</template>
           <template #targetheader>Selected</template>

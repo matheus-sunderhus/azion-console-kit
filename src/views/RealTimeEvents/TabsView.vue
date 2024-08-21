@@ -9,62 +9,34 @@
         class="w-full h-full"
         @tab-click="changePage"
       >
-        <TabPanel :header="mapTabs.httpRequests.label">
-          <RealTimeEventsHTTPRequestsListView
-            v-bind="props.httpRequests"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.httpRequests.index === tabSelectIndex"
-          />
-        </TabPanel>
-        <TabPanel :header="mapTabs.EdgeFunctions.label">
-          <RealTimeEventEdgeFunctionsListView
-            v-bind="props.edgeFunctions"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.EdgeFunctions.index === tabSelectIndex"
-          />
-        </TabPanel>
-        <TabPanel :header="mapTabs.EdgeFunctionsConsole.label">
-          <RealTimeEventEdgeFunctionsConsoleListView
-            v-bind="props.edgeFunctionsConsole"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.EdgeFunctionsConsole.index === tabSelectIndex"
-          />
-        </TabPanel>
-        <TabPanel :header="mapTabs.ImageProcessor.label">
-          <RealTimeEventsImageProcessor
-            v-bind="props.imageProcessor"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.ImageProcessor.index === tabSelectIndex"
-          />
-        </TabPanel>
-        <TabPanel :header="mapTabs.TieredCache.label">
-          <RealTimeEventsTieredCache
-            v-bind="props.tieredCache"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.TieredCache.index === tabSelectIndex"
-          />
-        </TabPanel>
-        <TabPanel :header="mapTabs.EdgeDNS.label">
-          <RealTimeEventsEdgeDNSListView
-            v-bind="props.edgeDNS"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.EdgeDNS.index === tabSelectIndex"
-          />
-        </TabPanel>
-        <TabPanel :header="mapTabs.DataStream.label">
-          <RealTimeEventsDataStreamListView
-            v-bind="props.dataStream"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.DataStream.index === tabSelectIndex"
-          />
-        </TabPanel>
-        <TabPanel :header="mapTabs.ActivityHistory.label">
-          <RealTimeEventsActivityHistoryListView
-            v-bind="props.activityHistory"
-            v-model:dateTime="timeFilter"
-            v-if="mapTabs.ActivityHistory.index === tabSelectIndex"
-          />
-        </TabPanel>
+        <template
+          :key="tab.tabName"
+          v-for="tab in tabPanels"
+        >
+          <TabPanel :header="tab.label">
+            <div class="flex flex-col gap-8 my-4">
+              <div class="flex gap-1">
+                <p class="text-xs font-medium leading-4">
+                  {{ tab.description }}
+                </p>
+              </div>
+            </div>
+            <component
+              :is="tab.component"
+              v-bind="tab.props"
+              v-model:filterData="filterData"
+              ref="tabRef"
+            >
+              <template #header="{ downloadCSV }">
+                <ContentFilterBlock
+                  v-model:filterData="filterData"
+                  :downloadCSV="downloadCSV"
+                  @updatedFilter="reload"
+                />
+              </template>
+            </component>
+          </TabPanel>
+        </template>
       </TabView>
     </template>
   </ContentBlock>
@@ -73,7 +45,7 @@
 <script setup>
   import ContentBlock from '@/templates/content-block'
   import PageHeadingBlock from '@/templates/page-heading-block'
-  import { onMounted, ref } from 'vue'
+  import { onBeforeMount, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import TabPanel from 'primevue/tabpanel'
   import TabView from 'primevue/tabview'
@@ -85,6 +57,9 @@
   import RealTimeEventsEdgeDNSListView from '@/views/RealTimeEventsEdgeDNS/ListView'
   import RealTimeEventsImageProcessor from '@/views/RealTimeEventsImageProcessor/ListView'
   import RealTimeEventsTieredCache from '@/views/RealTimeEventsTieredCache/ListView'
+  import ContentFilterBlock from '@/views/RealTimeEvents/blocks/content-filter-block.vue'
+  import { useRouteFilterManager } from '@/helpers'
+
   defineOptions({ name: 'RealTimeEventsTabsView' })
 
   const props = defineProps({
@@ -124,55 +99,106 @@
 
   const route = useRoute()
   const router = useRouter()
-  const tabSelectIndex = ref(0)
-  const timeFilter = ref({})
+  const tabRef = ref([])
+  const { getFiltersFromHash } = useRouteFilterManager()
 
-  const mapTabs = ref({
+  const tabSelectIndex = ref(0)
+  const filterData = ref(null)
+  const defaultFilter = {
+    tsRange: {},
+    fields: []
+  }
+
+  const mapTabs = {
     httpRequests: {
       index: 0,
+      table: 'httpRequests',
       tabName: 'http-requests',
-      label: 'HTTP Requests'
+      label: 'HTTP Requests',
+      props: props.httpRequests,
+      description:
+        'Logs of events from requests made to your edge applications and edge firewalls.',
+      component: RealTimeEventsHTTPRequestsListView
     },
     EdgeFunctions: {
       index: 1,
       tabName: 'edge-functions',
-      label: 'Edge Functions'
+      table: 'EdgeFunctions',
+      label: 'Edge Functions',
+      props: props.edgeFunctions,
+      description: 'Logs of events from requests made to your edge functions.',
+      component: RealTimeEventEdgeFunctionsListView
     },
     EdgeFunctionsConsole: {
       index: 2,
       tabName: 'edge-functions-console',
-      label: 'Edge Functions Console'
+      label: 'Edge Functions Console',
+      table: 'EdgeFunctionsConsole',
+      props: props.edgeFunctionsConsole,
+      description:
+        'Logs of events from edge applications using Edge Runtime returned by Cells Console.',
+      component: RealTimeEventEdgeFunctionsConsoleListView
     },
     ImageProcessor: {
       index: 3,
       tabName: 'image-processor',
-      label: 'Image Processor'
+      label: 'Image Processor',
+      props: props.imageProcessor,
+      table: 'ImageProcessor',
+      description:
+        'Logs of events from requests made to edge applications that processed images with Image Processor.',
+      component: RealTimeEventsImageProcessor
     },
     TieredCache: {
       index: 4,
       tabName: 'tiered-cache',
-      label: 'Tiered Cache'
+      label: 'Tiered Cache',
+      table: 'TieredCache',
+      props: props.tieredCache,
+      description: 'Logs of events from requests made to edge applications using Tiered Cache.',
+      component: RealTimeEventsTieredCache
     },
     EdgeDNS: {
       index: 5,
       tabName: 'edge-dns',
-      label: 'Edge DNS'
+      label: 'Edge DNS',
+      table: 'EdgeDNS',
+      props: props.edgeDNS,
+      description: 'Logs of events from queries made to Edge DNS.',
+      component: RealTimeEventsEdgeDNSListView
     },
     DataStream: {
       index: 6,
       tabName: 'data-stream',
-      label: 'Data Stream'
+      label: 'Data Stream',
+      table: 'DataStream',
+      props: props.dataStream,
+      description: 'Logs of data sent to endpoints by Data Stream.',
+      component: RealTimeEventsDataStreamListView
     },
     ActivityHistory: {
       index: 7,
       tabName: 'activity-history',
-      label: 'Activity History'
+      label: 'Activity History',
+      table: 'ActivityHistory',
+      props: props.activityHistory,
+      description:
+        'Logs of events from an Azion account regarding activities registered on Activity History. Use the Real-Time Events GraphQL API to query up to 2 years of logs.',
+      component: RealTimeEventsActivityHistoryListView
     }
-  })
+  }
+
+  const tabPanels = Object.values(mapTabs)
+
+  const resetFields = () => {
+    filterData.value.fields = []
+  }
 
   const changePage = async ({ index }) => {
-    const tab = Object.values(mapTabs.value).find((tab) => tab.index === index)
+    const tab = tabPanels.find((tab) => tab.index === index)
     selectedTab(tab)
+    resetFields()
+    reload()
   }
 
   const updateRouter = (tabName) => {
@@ -196,15 +222,25 @@
     const { params } = route
 
     if (params.tab) {
-      const tabSelect = Object.values(mapTabs.value).find((tab) => tab.tabName === params.tab)
+      const tabSelect = tabPanels.find((tab) => tab.tabName === params.tab)
       selectedTab(tabSelect)
       return
     }
 
-    selectedTab(Object.values(mapTabs.value)[0])
+    selectedTab(tabPanels[0])
   }
+
+  const reload = () => {
+    tabRef.value[tabSelectIndex.value].reloadListTable()
+  }
+
+  onBeforeMount(() => {
+    const filter = getFiltersFromHash()
+    filterData.value = filter || defaultFilter
+  })
 
   onMounted(() => {
     tabSelectInitial()
+    reload()
   })
 </script>

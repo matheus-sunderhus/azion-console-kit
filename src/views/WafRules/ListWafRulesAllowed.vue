@@ -1,24 +1,25 @@
 <template>
-  <ListTableNoHeaderBlock
+  <ListTableBlock
     ref="listAllowedRef"
     v-if="hasContentToList"
-    pageTitleDelete="WAF allowed rule"
     addButtonLabel="Allowed Rule"
     :editInDrawer="openEditDrawerWafRulesAllowed"
     :columns="wafRulesAllowedColumns"
     :listService="handleListWafRulesAllowedService"
-    :deleteService="handleDeleteWafRulesAllowedService"
     @on-load-data="handleLoadData"
     emptyListMessage="No allowed rules found."
+    isTabs
+    :actions="actions"
   >
     <template #addButton>
       <PrimeButton
         icon="pi pi-plus"
         label="Allowed Rule"
         @click="openCreateDrawerWafAllowed"
+        data-testid="create_Allowed Rule_button"
       />
     </template>
-  </ListTableNoHeaderBlock>
+  </ListTableBlock>
 
   <EmptyResultsBlock
     v-else
@@ -42,6 +43,7 @@
         icon="pi pi-plus"
         label="Allowed Rule"
         @click="openCreateDrawerWafAllowed"
+        data-testid="create_Allowed Rule_button"
       />
     </template>
     <template #illustration>
@@ -87,7 +89,7 @@
   import { columnBuilder } from '@/templates/list-table-block/columns/column-builder'
   import CreateDrawerBlock from '@templates/create-drawer-block'
   import EditDrawerBlock from '@templates/edit-drawer-block'
-  import ListTableNoHeaderBlock from '@templates/list-table-block/no-header'
+  import ListTableBlock from '@templates/list-table-block'
   import PrimeButton from 'primevue/button'
   import { ref } from 'vue'
   import { useRoute } from 'vue-router'
@@ -164,7 +166,7 @@
         columnBuilder({ data: columnData, columnAppearance: 'expand-text-column' })
     },
     {
-      field: 'reason',
+      field: 'description',
       header: 'Description',
       type: 'component',
       component: (columnData) =>
@@ -248,4 +250,13 @@
   const openCreateDrawerWafAllowed = () => {
     showCreateWafRulesAllowedDrawer.value = true
   }
+
+  const actions = [
+    {
+      type: 'delete',
+      title: 'WAF allowed rule',
+      icon: 'pi pi-trash',
+      service: handleDeleteWafRulesAllowedService
+    }
+  ]
 </script>

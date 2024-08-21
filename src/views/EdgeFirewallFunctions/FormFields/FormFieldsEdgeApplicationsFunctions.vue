@@ -49,11 +49,13 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Name *"
+          label="Name"
+          required
           name="name"
           v-model="name"
           description="Give a unique and descriptive name to identify the edge firewall function instance."
           placeholder="My edge firewall function instance"
+          data-testid="edge-firewall-functions-form__name-field"
         />
       </div>
     </template>
@@ -67,7 +69,8 @@
     <template #inputs>
       <div class="flex w-80 flex-col gap-2 sm:max-w-lg max-sm:w-full">
         <FieldDropdown
-          label="Edge Function *"
+          label="Edge Function"
+          required
           name="edgeFunctionID"
           :options="edgeFunctionsList"
           @onChange="changeArgs"
@@ -77,6 +80,7 @@
           :optionDisabled="(option) => option.disabled"
           filter
           appendTo="self"
+          data-testid="edge-firewall-functions-form__edge-function-dropdown"
         />
       </div>
 
@@ -92,6 +96,7 @@
           :theme="theme"
           :options="editorOptions"
           class="min-h-[200px] overflow-clip surface-border border rounded-md"
+          data-testid="edge-firewall-functions-form__arguments-field__editor"
         />
         <small class="text-xs text-color-secondary font-normal leading-5">
           Customize the arguments in JSON format. Once set, they can be called in code using

@@ -5,10 +5,16 @@
       :model="breadcrumbs.items"
       class="-ml-1.5 overflow-auto w-full"
       :pt="{
-        label: { class: 'whitespace-nowrap' }
+        label: { class: 'whitespace-nowrap' },
+        menuItem: ({ props }) => ({
+          'data-testid': `page-heading-block__breadcrumb__${props.item.label}`
+        })
       }"
     />
-    <div class="flex w-full py-4 items-center justify-between flex-wrap gap-3">
+    <div
+      class="flex w-full py-4 items-center flex-wrap gap-3"
+      :class="{ 'justify-between': !isRightAlignment }"
+    >
       <div
         class="flex flex-col gap-3 max-md:w-full"
         v-if="pageTitle || description"
@@ -29,9 +35,10 @@
       </div>
       <div
         v-if="hasDefaultSlot"
-        class="ml-auto items-end flex justify-end max-md:w-full"
+        class="items-end flex justify-end max-md:w-full"
+        :class="{ 'ml-auto': !isRightAlignment }"
       >
-        <slot></slot>
+        <slot name="default"></slot>
       </div>
     </div>
   </div>
@@ -86,6 +93,9 @@
       description: {
         type: String,
         required: false
+      },
+      isRightAlignment: {
+        type: Boolean
       }
     },
     computed: {

@@ -18,7 +18,7 @@
       type: Array,
       required: true
     },
-    edgeApps: {
+    edgeApplicationsData: {
       type: Array,
       required: true
     },
@@ -26,6 +26,9 @@
       type: Boolean,
       required: false,
       default: false
+    },
+    isLoadingRequests: {
+      type: Boolean
     }
   })
 
@@ -38,10 +41,6 @@
   const { value: mtlsIsEnabled } = useField('mtlsIsEnabled')
   const { value: mtlsTrustedCertificate } = useField('mtlsTrustedCertificate')
 
-  const CNAMELabel = computed(() => {
-    return cnameAccessOnly.value ? 'CNAME *' : 'CNAME'
-  })
-
   const edgeCertificates = computed(() => {
     return props.digitalCertificates.filter((certificate) => certificate.type === EDGE_CERTIFICATE)
   })
@@ -51,7 +50,7 @@
     )
   })
   const edgeApplicationOptions = computed(() => {
-    return props.edgeApps.map((edgeApp) => ({ name: edgeApp.name, value: edgeApp.id }))
+    return props.edgeApplicationsData.map((edgeApp) => ({ name: edgeApp.name, value: edgeApp.id }))
   })
   const edgeCertificatesOptions = computed(() => {
     const defaultCertificate = [
@@ -86,6 +85,10 @@
     }
   ])
 
+  const isLoadingRequestsData = computed(() => {
+    return props.isLoadingRequests
+  })
+
   watch(edgeCertificate, async (newEdgeCertificate) => {
     setEdgeCertificate(newEdgeCertificate)
   })
@@ -99,9 +102,11 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Name *"
+          label="Name"
+          required
           name="name"
           placeholder="My domain"
+          data-testid="domains-form__name-field"
           :value="name"
           description="This is an identification name for the domain. Once you save the configuration, the URL will be automatically generated."
         />
@@ -116,11 +121,13 @@
     <template #inputs>
       <div class="flex flex-col w-full sm:max-w-xs gap-2">
         <FieldDropdown
-          label="Edge Application *"
+          label="Edge Application"
+          required
+          data-testid="domains-form__edge-application-field"
           name="edgeApplication"
           :options="edgeApplicationOptions"
-          :loading="!edgeApplicationOptions.length"
-          :disabled="!edgeApplicationOptions.length"
+          :loading="isLoadingRequestsData"
+          :disabled="isLoadingRequestsData"
           optionLabel="name"
           optionValue="value"
           :value="edgeApplication"
@@ -130,6 +137,7 @@
         />
       </div>
       <FieldSwitchBlock
+        data-testid="domains-form__cname-access-only-field"
         nameField="cnameAccessOnly"
         name="cnameAccessOnly"
         auto
@@ -139,8 +147,10 @@
       />
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldTextArea
-          :label="CNAMELabel"
+          label="CNAME"
+          :required="cnameAccessOnly"
           name="cnames"
+          data-testid="domains-form__cnames-field"
           rows="2"
           :value="cnames"
           description="List of CNAMEs to associate to the Azion domain. Separate each entry in a new line."
@@ -148,11 +158,12 @@
       </div>
       <div class="flex flex-col w-full sm:max-w-xs gap-2">
         <FieldDropdown
+          data-testid="domains-form__edge-certificate-field"
           label="Digital Certificate"
           name="edgeCertificate"
           :options="edgeCertificatesOptions"
-          :loading="!edgeCertificatesOptions.length"
-          :disabled="!edgeCertificatesOptions.length"
+          :loading="isLoadingRequestsData"
+          :disabled="isLoadingRequestsData"
           optionLabel="name"
           optionValue="value"
           :value="edgeCertificate"
@@ -170,6 +181,7 @@
   >
     <template #inputs>
       <FieldSwitchBlock
+        data-testid="domains-form__mtls-is-enabled-field"
         nameField="mtlsIsEnabled"
         name="mtlsIsEnabled"
         auto
@@ -192,10 +204,12 @@
         class="flex flex-col w-full sm:max-w-xs gap-2"
       >
         <FieldDropdown
-          label="Trusted CA Certificate *"
+          label="Trusted CA Certificate"
+          data-testid="domains-form__mtls-trusted-certificate-field"
+          required
           name="mtlsTrustedCertificate"
           :options="trustedCACertificatesOptions"
-          :loading="!trustedCACertificatesOptions.length"
+          :loading="isLoadingRequestsData"
           :disabled="!mtlsIsEnabled"
           optionLabel="name"
           optionValue="value"
@@ -211,6 +225,7 @@
   <form-horizontal title="Status">
     <template #inputs>
       <FieldSwitchBlock
+        data-testid="domains-form__active-field"
         nameField="active"
         name="active"
         auto

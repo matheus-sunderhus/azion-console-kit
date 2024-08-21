@@ -30,11 +30,13 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Name *"
+          label="Name"
+          required
           name="name"
           placeholder="My service"
           :value="name"
           description="Give a unique and descriptive name to identify the service."
+          data-testid="edge-service-form__name-field"
         />
       </div>
     </template>
@@ -54,6 +56,7 @@
           class="min-h-[200px] overflow-clip surface-border border rounded-md"
           :class="{ 'border-red-500 border': codeError }"
           :options="editorOptions"
+          data-testid="edge-service-form__variables-field"
         />
         <small
           v-if="codeError"
@@ -77,6 +80,7 @@
         auto
         :isCard="false"
         title="Active"
+        data-testid="edge-service-form__status__active-field"
       />
     </template>
   </FormHorizontal>

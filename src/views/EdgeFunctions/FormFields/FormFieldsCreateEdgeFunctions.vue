@@ -10,6 +10,7 @@
   import CodePreview from '../components/code-preview.vue'
   import HelloWorldSample from '@/helpers/edge-function-hello-world'
   import FieldSwitchBlock from '@/templates/form-fields-inputs/fieldSwitchBlock'
+  import FieldGroupRadio from '@/templates/form-fields-inputs/fieldGroupRadio'
 
   import { computed, ref } from 'vue'
   import { useField } from 'vee-validate'
@@ -26,6 +27,7 @@
   const showPreview = ref(true)
 
   const { value: name } = useField('name')
+
   const { value: jsonArgs, errorMessage: jsonArgsError } = useField('jsonArgs', null, {
     initialValue: ARGS_INITIAL_STATE
   })
@@ -49,6 +51,19 @@
     emit('update:previewData', previewValues)
     return previewValues
   })
+
+  const initiatorTypeOptions = [
+    {
+      title: 'Edge Application',
+      subtitle: 'Functions are executed at the edge to reduce latency and enhance performance.',
+      inputValue: 'edge_application'
+    },
+    {
+      title: 'Edge Firewall',
+      subtitle: 'Functions are executed by a firewall to apply security policies.',
+      inputValue: 'edge_firewall'
+    }
+  ]
 </script>
 
 <template>
@@ -62,7 +77,8 @@
         <template #inputs>
           <div class="flex flex-col sm:max-w-lg w-full gap-2">
             <FieldText
-              label="Name *"
+              label="Name"
+              required
               name="name"
               placeholder="My function"
               :value="name"
@@ -86,6 +102,23 @@
               :value="LANGUAGE_LABEL"
               description="Currently, only JavaScript is supported."
               readonly
+            />
+          </div>
+        </template>
+      </FormHorizontal>
+
+      <FormHorizontal
+        class="mt-8"
+        title="Initiator Type"
+        description="Define the source or trigger that executes the edge function."
+      >
+        <template #inputs>
+          <div class="flex flex-col w-full gap-2">
+            <FieldGroupRadio
+              required
+              nameField="initiatorType"
+              isCard
+              :options="initiatorTypeOptions"
             />
           </div>
         </template>

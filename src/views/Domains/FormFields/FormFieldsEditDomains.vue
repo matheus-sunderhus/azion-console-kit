@@ -19,7 +19,7 @@
       type: Array,
       required: true
     },
-    edgeApps: {
+    edgeApplicationsData: {
       type: Array,
       required: true
     },
@@ -27,6 +27,9 @@
       type: Boolean,
       required: false,
       default: false
+    },
+    loadingEdgeApplications: {
+      type: Boolean
     }
   })
 
@@ -41,10 +44,6 @@
 
   const { value: mtlsTrustedCertificate } = useField('mtlsTrustedCertificate')
 
-  const CNAMELabel = computed(() => {
-    return cnameAccessOnly.value ? 'CNAME *' : 'CNAME'
-  })
-
   const edgeCertificates = computed(() => {
     return props.digitalCertificates.filter((certificate) => certificate.type === EDGE_CERTIFICATE)
   })
@@ -56,7 +55,7 @@
   })
 
   const edgeApplicationOptions = computed(() => {
-    return props.edgeApps.map((edgeApp) => ({ name: edgeApp.name, value: edgeApp.id }))
+    return props.edgeApplicationsData.map((edgeApp) => ({ name: edgeApp.name, value: edgeApp.id }))
   })
 
   const edgeCertificatesOptions = computed(() => {
@@ -93,6 +92,10 @@
       inputValue: 'permissive'
     }
   ])
+
+  const isLoadingEdgeApplications = computed(() => {
+    return props.loadingEdgeApplications
+  })
 </script>
 
 <template>
@@ -103,7 +106,8 @@
     <template #inputs>
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldText
-          label="Name *"
+          label="Name"
+          required
           name="name"
           placeholder="My domain"
           :value="name"
@@ -132,6 +136,7 @@
             <i class="pi pi-lock" />
             <InputText
               id="domainName"
+              data-testid="edit-domains-form__domain-field__input"
               v-model="domainName"
               type="text"
               class="flex flex-col w-full"
@@ -142,6 +147,7 @@
           <PrimeButton
             icon="pi pi-clone"
             outlined
+            data-testid="edit-domains-form__domain-field__copy-button"
             type="button"
             aria-label="Copy to Clipboard"
             label="Copy to Clipboard"
@@ -160,11 +166,12 @@
     <template #inputs>
       <div class="flex flex-col w-full sm:max-w-xs gap-2">
         <FieldDropdown
-          label="Edge Application *"
+          label="Edge Application"
+          required
           name="edgeApplication"
           :options="edgeApplicationOptions"
-          :loading="!edgeApplicationOptions.length"
-          :disabled="!edgeApplicationOptions.length"
+          :loading="isLoadingEdgeApplications"
+          :disabled="isLoadingEdgeApplications"
           optionLabel="name"
           optionValue="value"
           :value="edgeApplication"
@@ -185,7 +192,9 @@
 
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldTextArea
-          :label="CNAMELabel"
+          label="CNAME"
+          data-testid="domains-form__cnames-field"
+          :required="cnameAccessOnly"
           name="cnames"
           rows="2"
           :value="cnames"
@@ -240,7 +249,8 @@
         class="flex flex-col w-full sm:max-w-xs gap-2"
       >
         <FieldDropdown
-          label="Trusted CA Certificate *"
+          label="Trusted CA Certificate"
+          required
           name="mtlsTrustedCertificate"
           :options="trustedCACertificatesOptions"
           :loading="!trustedCACertificatesOptions.length"
@@ -259,6 +269,7 @@
   <form-horizontal title="Status">
     <template #inputs>
       <FieldSwitchBlock
+        data-testid="edit-domains-form__active-field"
         nameField="active"
         name="active"
         auto

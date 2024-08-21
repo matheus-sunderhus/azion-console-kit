@@ -1,9 +1,11 @@
 <template>
   <div
     class="max-w-full"
+    :class="{ 'mt-4': isTabs }"
     data-testid="data-table-container"
   >
     <DataTable
+      ref="dataTableRef"
       class="overflow-clip rounded-md"
       v-if="!isLoading"
       @rowReorder="onRowReorder"
@@ -11,47 +13,69 @@
       removableSort
       :value="data"
       dataKey="id"
-      selectionMode="single"
       @row-click="editItemSelected"
+      rowHover
       v-model:filters="filters"
       :paginator="showPagination"
       :rowsPerPageOptions="[10, 20, 50, 100]"
-      :rows="MINIMUN_OF_ITEMS_PER_PAGE"
+      :rows="MINIMUM_OF_ITEMS_PER_PAGE"
       :globalFilterFields="filterBy"
+      v-model:selection="selectedItems"
+      :exportFilename="exportFileName"
+      :exportFunction="exportFunctionMapper"
       :loading="isLoading"
       data-testid="data-table"
     >
-      <template #header>
-        <div
-          class="flex flex-wrap justify-between gap-2 w-full"
-          data-testid="data-table-header"
+      <template
+        #header
+        v-if="!props.hiddenHeader"
+      >
+        <slot
+          name="header"
+          :exportTableCSV="handleExportTableDataToCSV"
         >
-          <span
-            class="flex flex-row p-input-icon-left items-center max-sm:w-full"
-            data-testid="data-table-search"
+          <div
+            class="flex flex-wrap justify-between gap-2 w-full"
+            data-testid="data-table-header"
           >
-            <i class="pi pi-search" />
-            <InputText
-              class="h-8 w-full md:min-w-[320px]"
-              v-model.trim="filters.global.value"
-              placeholder="Search"
-              data-testid="data-table-search-input"
-            />
-          </span>
-          <slot
-            name="addButton"
-            data-testid="data-table-add-button"
-          >
+            <span
+              class="flex flex-row p-input-icon-left items-center max-sm:w-full"
+              data-testid="data-table-search"
+            >
+              <i class="pi pi-search" />
+              <InputText
+                class="h-2 w-full md:min-w-[20rem]"
+                v-model.trim="filters.global.value"
+                data-testid="data-table-search-input"
+                placeholder="Search"
+              />
+            </span>
+
             <PrimeButton
-              class="max-sm:w-full"
-              @click="navigateToAddPage"
-              icon="pi pi-plus"
-              :data-testid="`create_${addButtonLabel}_button`"
-              :label="addButtonLabel"
-              v-if="addButtonLabel"
+              v-if="hasExportToCsvMapper"
+              @click="handleExportTableDataToCSV"
+              outlined
+              class="max-sm:w-full ml-auto"
+              icon="pi pi-download"
+              :data-testid="`export_button`"
+              v-tooltip.bottom="{ value: 'Export to CSV', showDelay: 200 }"
             />
-          </slot>
-        </div>
+
+            <slot
+              name="addButton"
+              data-testid="data-table-add-button"
+            >
+              <PrimeButton
+                class="max-sm:w-full"
+                @click="navigateToAddPage"
+                icon="pi pi-plus"
+                :data-testid="`create_${addButtonLabel}_button`"
+                :label="addButtonLabel"
+                v-if="addButtonLabel"
+              />
+            </slot>
+          </div>
+        </slot>
       </template>
 
       <Column
@@ -62,12 +86,19 @@
       />
 
       <Column
+        v-if="showSelectionMode"
+        selectionMode="multiple"
+        headerStyle="width: 3rem"
+      />
+
+      <Column
         sortable
         v-for="col of selectedColumns"
         :key="col.field"
         :field="col.field"
         :header="col.header"
         :sortField="col?.sortField"
+        class="hover:cursor-pointer"
         data-testid="data-table-column"
       >
         <template #body="{ data: rowData }">
@@ -75,13 +106,13 @@
             <div
               v-html="rowData[col.field]"
               :data-testid="`list-table-block__column__${col.field}__row`"
-            ></div>
+            />
           </template>
           <template v-else>
             <component
-              :is="col.component(rowData[col.field])"
+              :is="col.component(extractFieldValue(rowData, col.field))"
               :data-testid="`list-table-block__column__${col.field}__row`"
-            ></component>
+            />
           </template>
         </template>
       </Column>
@@ -130,18 +161,40 @@
             </OverlayPanel>
           </div>
         </template>
-        <template #body="{ data: rowData }">
+        <template
+          #body="{ data: rowData }"
+          v-if="isRenderActions"
+        >
           <div
             class="flex justify-end"
-            v-if="showActions"
+            v-if="isRenderOneOption"
+            data-testid="data-table-actions-column-body-action"
+          >
+            <PrimeButton
+              size="small"
+              outlined
+              v-bind="optionsOneAction(rowData)"
+              @click="executeCommand(rowData)"
+              class="cursor-pointer table-button"
+              data-testid="data-table-actions-column-body-action-button"
+            />
+          </div>
+          <div
+            class="flex justify-end"
+            v-else
             data-testid="data-table-actions-column-body-actions"
           >
             <PrimeMenu
-              :ref="assignMenuRef(rowData.id)"
+              :ref="setMenuRefForRow(rowData.id)"
               id="overlay_menu"
               v-bind:model="actionOptions(rowData)"
               :popup="true"
               data-testid="data-table-actions-column-body-actions-menu"
+              :pt="{
+                menuitem: ({ context }) => ({
+                  'data-testid': `data-table__actions-menu-item__${context.item?.label}-button`
+                })
+              }"
             />
             <PrimeButton
               v-tooltip.top="{ value: 'Actions', showDelay: 200 }"
@@ -161,7 +214,12 @@
           data-testid="data-table-empty-content"
         >
           <div class="my-4 flex flex-col gap-3 justify-center items-start">
-            <p class="text-md font-normal text-secondary">{{ emptyListMessage }}</p>
+            <p
+              class="text-md font-normal text-secondary"
+              data-testid="list-table-block__empty-message__text"
+            >
+              {{ emptyListMessage }}
+            </p>
           </div>
         </slot>
       </template>
@@ -175,32 +233,37 @@
       }"
       data-testid="data-table-skeleton"
     >
-      <template #header>
-        <div
-          class="flex flex-wrap justify-between gap-2 w-full"
-          data-testid="data-table-skeleton-header"
-        >
-          <span
-            class="flex flex-row h-8 p-input-icon-left max-sm:w-full"
-            data-testid="data-table-skeleton-search"
+      <template
+        #header
+        v-if="!props.hiddenHeader"
+      >
+        <slot name="header">
+          <div
+            class="flex flex-wrap justify-between gap-2 w-full"
+            data-testid="data-table-skeleton-header"
           >
-            <i class="pi pi-search" />
-            <InputText
-              class="w-full h-8 md:min-w-[320px]"
-              v-model="filters.global.value"
-              placeholder="Search"
-              data-testid="data-table-skeleton-search-input"
+            <span
+              class="flex flex-row h-8 p-input-icon-left max-sm:w-full"
+              data-testid="data-table-skeleton-search"
+            >
+              <i class="pi pi-search" />
+              <InputText
+                class="w-full h-8 md:min-w-[20rem]"
+                v-model="filters.global.value"
+                placeholder="Search"
+                data-testid="data-table-skeleton-search-input"
+              />
+            </span>
+            <PrimeButton
+              class="max-sm:w-full"
+              @click="navigateToAddPage"
+              icon="pi pi-plus"
+              :label="addButtonLabel"
+              v-if="addButtonLabel"
+              data-testid="data-table-skeleton-add-button"
             />
-          </span>
-          <PrimeButton
-            class="max-sm:w-full"
-            @click="navigateToAddPage"
-            icon="pi pi-plus"
-            :label="addButtonLabel"
-            v-if="addButtonLabel"
-            data-testid="data-table-skeleton-add-button"
-          />
-        </div>
+          </div>
+        </slot>
       </template>
       <Column
         sortable
@@ -216,11 +279,6 @@
       </Column>
     </DataTable>
   </div>
-  <DeleteDialog
-    :informationForDeletion="informationForDeletion"
-    @successfullyDeleted="updatedTable()"
-    data-testid="delete-dialog"
-  />
 </template>
 
 <script setup>
@@ -233,25 +291,35 @@
   import PrimeMenu from 'primevue/menu'
   import OverlayPanel from 'primevue/overlaypanel'
   import Skeleton from 'primevue/skeleton'
-  import { useToast } from 'primevue/usetoast'
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
-  import DeleteDialog from './dialog/delete-dialog'
+  import DeleteDialog from './dialog/delete-dialog.vue'
+  import { useDialog } from 'primevue/usedialog'
+  import { useToast } from 'primevue/usetoast'
+  import { getCsvCellContentFromRowData } from '@/helpers'
 
-  defineOptions({ name: 'list-table-block' })
-  const emit = defineEmits(['on-load-data', 'on-before-go-to-add-page', 'on-before-go-to-edit'])
+  defineOptions({ name: 'list-table-block-new' })
+
+  const emit = defineEmits([
+    'on-load-data',
+    'on-before-go-to-add-page',
+    'on-before-go-to-edit',
+    'update:selectedItensData'
+  ])
 
   const props = defineProps({
+    hiddenHeader: {
+      type: Boolean
+    },
     columns: {
       type: Array,
       default: () => [{ field: 'name', header: 'Name' }]
     },
-    isGraphql: {
+    lazyLoad: {
       type: Boolean
     },
-    pageTitleDelete: {
-      type: String,
-      required: true
+    isGraphql: {
+      type: Boolean
     },
     createPagePath: {
       type: String,
@@ -272,9 +340,6 @@
       required: true,
       type: Function
     },
-    deleteService: {
-      type: Function
-    },
     enableEditClick: {
       type: Boolean,
       default: true
@@ -282,57 +347,82 @@
     reorderableRows: {
       type: Boolean
     },
-    rowActions: {
-      type: Array,
-      default: () => []
-    },
     emptyListMessage: {
       type: String,
       default: () => 'No registers found.'
+    },
+    actions: {
+      type: Array,
+      default: () => []
+    },
+    isTabs: {
+      type: Boolean,
+      default: false
+    },
+    showSelectionMode: {
+      type: Boolean
+    },
+    selectedItensData: {
+      type: Array,
+      default: () => []
+    },
+    csvMapper: {
+      type: Function
+    },
+    exportFileName: {
+      type: String
     }
   })
 
-  const MINIMUN_OF_ITEMS_PER_PAGE = 10
-
+  const MINIMUM_OF_ITEMS_PER_PAGE = 10
+  const isRenderActions = !!props.actions?.length
+  const isRenderOneOption = props.actions?.length === 1
   const selectedId = ref(null)
+  const dataTableRef = ref(null)
   const filters = ref({
     global: { value: '', matchMode: FilterMatchMode.CONTAINS }
   })
   const isLoading = ref(false)
   const data = ref([])
   const selectedColumns = ref([])
-  const informationForDeletion = ref({})
-  const showActions = ref(true)
+  const columnSelectorPanel = ref(null)
+  const menuRef = ref({})
+  const hasExportToCsvMapper = ref(!!props.csvMapper)
+
+  const dialog = useDialog()
+  const router = useRouter()
+  const toast = useToast()
+
+  const selectedItems = computed({
+    get: () => {
+      return props.selectedItensData
+    },
+    set: (value) => {
+      emit('update:selectedItensData', value)
+    }
+  })
 
   onMounted(() => {
-    loadData({ page: 1 })
+    if (!props.lazyLoad) {
+      loadData({ page: 1 })
+    }
     selectedColumns.value = props.columns
   })
 
-  const filterBy = computed(() => {
-    const filtersPath = props.columns.filter((el) => el.filterPath).map((el) => el.filterPath)
-    const filters = props.columns.map((item) => item.field)
-
-    return [...filters, ...filtersPath]
-  })
-
-  const showToast = (severity, detail) => {
-    if (!detail) return
-    const options = {
-      closable: true,
-      severity,
-      summary: severity,
-      detail
+  /**
+   * @param {import('primevue/datatable').DataTableExportFunctionOptions} rowData
+   */
+  const exportFunctionMapper = (rowData) => {
+    if (!hasExportToCsvMapper.value) {
+      return
     }
-
-    toast.add(options)
+    const columnMapper = props.csvMapper(rowData)
+    return getCsvCellContentFromRowData({ columnMapper, rowData })
   }
 
-  const showPagination = computed(() => {
-    return data.value.length > MINIMUN_OF_ITEMS_PER_PAGE
-  })
-
-  const columnSelectorPanel = ref(null)
+  const handleExportTableDataToCSV = () => {
+    dataTableRef.value.exportCSV()
+  }
   const toggleColumnSelector = (event) => {
     columnSelectorPanel.value.toggle(event)
   }
@@ -341,62 +431,78 @@
     data.value = event.value
   }
 
+  const openDialog = (dialogComponent, body) => {
+    dialog.open(dialogComponent, body)
+  }
+
   const actionOptions = (rowData) => {
-    const actionOptions = []
+    const createActionOption = (action) => {
+      return {
+        ...action,
+        disabled: action.disabled && action.disabled(rowData),
+        command: () => {
+          switch (action.type) {
+            case 'dialog':
+              openDialog(action.dialog.component, action.dialog.body(rowData, reload))
+              break
+            case 'delete':
+              {
+                const bodyDelete = {
+                  data: {
+                    title: action.title,
+                    selectedID: rowData.id,
+                    selectedItemData: rowData,
+                    deleteDialogVisible: true,
+                    deleteService: action.service,
+                    rerender: Math.random()
+                  },
+                  onClose: (opt) => opt.data.updated && reload()
+                }
+                openDialog(DeleteDialog, bodyDelete)
+              }
+              break
+            case 'action':
+              action.commandAction(rowData)
+              break
+          }
+        }
+      }
+    }
 
-    if (props.rowActions && props.rowActions.length > 0) {
-      props.rowActions.forEach((action) => {
-        if (action.visibleAction?.(rowData)) return
+    const actions = props.actions
+      .filter((action) => !action.visibleAction || action.visibleAction(rowData))
+      .map(createActionOption)
 
-        actionOptions.push({
-          ...action,
-          command: () => action.command(rowData)
+    return actions
+  }
+
+  const loadData = async ({ page, ...query }) => {
+    if (props.listService) {
+      try {
+        isLoading.value = true
+        const response = props.isGraphql
+          ? await props.listService()
+          : await props.listService({ page, ...query })
+        data.value = response
+      } catch (error) {
+        toast.add({
+          closable: true,
+          severity: 'error',
+          summary: 'error',
+          detail: 'Error fetching data:',
+          error
         })
-      })
-    }
-
-    if (props.deleteService) {
-      actionOptions.push({
-        label: 'Delete',
-        icon: 'pi pi-fw pi-trash',
-        severity: 'error',
-        command: () => openDeleteDialog()
-      })
-    }
-
-    showActions.value = actionOptions.length > 0
-
-    return actionOptions
-  }
-  const toast = useToast()
-
-  const loadData = async ({ page }) => {
-    try {
-      isLoading.value = true
-      let response = null
-      if (props.isGraphql) {
-        response = await props.listService()
+      } finally {
+        isLoading.value = false
       }
-      if (!props.isGraphql) {
-        response = await props.listService({ page })
-      }
-      data.value = response
-    } catch (error) {
-      data.value = []
-      showToast('error', error)
-    } finally {
-      isLoading.value = false
     }
   }
-
-  const router = useRouter()
 
   const navigateToAddPage = () => {
     emit('on-before-go-to-add-page')
     router.push(props.createPagePath)
   }
 
-  const menuRef = ref({})
   const toggleActionsMenu = (event, selectedID) => {
     if (!selectedID) {
       throw new Error('Please provide an id for each data item through the service adapter')
@@ -404,37 +510,57 @@
     selectedId.value = selectedID
     menuRef.value[selectedID].toggle(event)
   }
+
   const editItemSelected = ({ data: item }) => {
-    emit('on-before-go-to-edit')
+    emit('on-before-go-to-edit', item)
     if (props.editInDrawer) {
       props.editInDrawer(item)
-      return
-    }
-    if (props.enableEditClick) {
+    } else if (props.enableEditClick) {
       router.push({ path: `${props.editPagePath}/${item.id}` })
     }
   }
-  const openDeleteDialog = () => {
-    informationForDeletion.value = {
-      title: props.pageTitleDelete,
-      selectedID: selectedId.value,
-      deleteService: props.deleteService,
-      deleteDialogVisible: true,
-      rerender: Math.random()
+
+  const executeCommand = (rowData) => {
+    const [firstAction] = actionOptions(rowData)
+    firstAction?.command()
+  }
+
+  const optionsOneAction = (rowData) => {
+    const [firstAction] = actionOptions(rowData)
+    return {
+      icon: firstAction?.icon,
+      disabled: firstAction?.disabled
     }
   }
 
-  const updatedTable = () => {
-    loadData({ page: 1 })
+  const reload = (query = {}) => {
+    loadData({ page: 1, ...query })
   }
 
-  const assignMenuRef = (id) => {
+  defineExpose({ reload })
+
+  const extractFieldValue = (rowData, field) => {
+    return rowData[field]
+  }
+
+  const setMenuRefForRow = (rowDataID) => {
     return (document) => {
       if (document !== null) {
-        menuRef.value[id] = document
+        menuRef.value[rowDataID] = document
       }
     }
   }
+
+  const filterBy = computed(() => {
+    const filtersPath = props.columns.filter((el) => el.filterPath).map((el) => el.filterPath)
+    const filters = props.columns.map((item) => item.field)
+
+    return [...filters, ...filtersPath]
+  })
+
+  const showPagination = computed(() => {
+    return data.value.length > MINIMUM_OF_ITEMS_PER_PAGE
+  })
 
   watch(data, (currentState) => {
     const hasData = currentState?.length > 0

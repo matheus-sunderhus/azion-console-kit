@@ -87,8 +87,9 @@
           <span
             class="text-sm"
             data-testid="profile-block__theme__label"
-            >Theme</span
           >
+            Theme
+          </span>
           <Dropdown
             data-testid="profile-block__theme__options"
             appendTo="self"
@@ -256,11 +257,11 @@
           <template #option="slotProps">
             <div class="flex gap-2 align-items-center">
               <i
-                :data-testid="`profile-block__mobile-theme-option__icon-${slotProps.value.name}`"
+                :data-testid="`profile-block__mobile-theme-option__icon-${slotProps.option.name}`"
                 :class="slotProps.option.icon"
               ></i>
               <div
-                :data-testid="`profile-block__mobile-theme-option__icon-${slotProps.value.name}`"
+                :data-testid="`profile-block__mobile-theme-option__icon-${slotProps.option.name}`"
               >
                 {{ slotProps.option.name }}
               </div>
@@ -290,7 +291,6 @@
 </template>
 
 <script setup>
-  import { getStaticUrlsByEnvironment } from '@/helpers'
   import { useAccountStore } from '@/stores/account'
   import { computed, inject, ref, watch } from 'vue'
 
@@ -321,10 +321,7 @@
     },
     {
       label: 'Billing & Subscriptions',
-      command: () => {
-        const billingUrl = getStaticUrlsByEnvironment('billing')
-        window.open(billingUrl, '_blank')
-      }
+      to: '/billing'
     },
     {
       label: 'Credentials',

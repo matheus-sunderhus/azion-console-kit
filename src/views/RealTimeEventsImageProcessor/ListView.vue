@@ -1,13 +1,8 @@
 <script setup>
-  import EmptyResultsBlock from '@/templates/empty-results-block'
-  import ListTableBlock from '@/templates/list-table-block/no-header'
-  import PrimeButton from 'primevue/button'
+  import ListTableBlock from '@/templates/list-table-block'
   import { computed, ref } from 'vue'
-  import IntervalFilterBlock from '@/views/RealTimeEvents/blocks/interval-filter-block'
   import Drawer from './Drawer'
-  import { useRouter } from 'vue-router'
   import { columnBuilder } from '@/templates/list-table-block/columns/column-builder'
-  const emit = defineEmits(['update:dateTime'])
 
   const props = defineProps({
     documentationService: {
@@ -22,28 +17,18 @@
       type: Function,
       required: true
     },
-    dateTime: {
+    filterData: {
       type: Object,
       default: () => ({})
     }
   })
 
-  const filterDate = computed({
-    get: () => {
-      return props.dateTime
-    },
-    set: (value) => {
-      emit('update:dateTime', value)
-    }
-  })
-  const hasContentToList = ref(true)
   const listTableBlockRef = ref('')
-  const router = useRouter()
   const drawerRef = ref('')
 
   const openDetailDrawer = ({ configurationId, ts, httpUserAgent, httpReferer }) => {
     drawerRef.value.openDetailDrawer({
-      tsRange: filterDate.value,
+      ...props.filterData,
       configurationId,
       httpReferer,
       httpUserAgent,
@@ -51,20 +36,12 @@
     })
   }
 
-  const handleLoadData = (event) => {
-    hasContentToList.value = event
-  }
-
-  const reloadList = () => {
-    if (hasContentToList.value) {
-      listTableBlockRef.value.reload()
-      return
-    }
-    hasContentToList.value = true
+  const reloadListTable = () => {
+    listTableBlockRef.value.reload()
   }
 
   const listProvider = async () => {
-    return await props.listImageProcessor({ tsRange: filterDate.value })
+    return await props.listImageProcessor({ ...props.filterData })
   }
 
   const getColumns = computed(() => {
@@ -100,9 +77,13 @@
     ]
   })
 
-  const goToEdgeApplication = () => {
-    router.push({ name: 'list-edge-applications' })
-  }
+  const customColumnMapper = (rowData) => ({
+    requestUri: rowData.data.value
+  })
+
+  defineExpose({
+    reloadListTable
+  })
 </script>
 
 <template>
@@ -110,42 +91,22 @@
     ref="drawerRef"
     :loadService="props.loadImageProcessor"
   />
-  <div class="flex flex-col gap-8 my-4">
-    <div class="flex gap-1">
-      <p class="text-xs font-medium leading-4">
-        Logs of events from requests made to edge applications that processed images with Image
-        Processor.
-      </p>
-    </div>
-    <IntervalFilterBlock
-      v-model:filterDate="filterDate"
-      @applyTSRange="reloadList"
-    />
-  </div>
   <ListTableBlock
-    v-if="hasContentToList && filterDate.tsRangeBegin"
+    lazyLoad
     ref="listTableBlockRef"
     :listService="listProvider"
     :columns="getColumns"
     :editInDrawer="openDetailDrawer"
-    @on-load-data="handleLoadData"
     emptyListMessage="No logs have been found for this period."
-  />
-
-  <EmptyResultsBlock
-    v-else
-    title="No logs have been found for this period."
-    description="Use the filter to change time range and variables, or create a new edge application with Image Processor configurations. Logs are displayed once there are incoming requests and traffic."
-    :documentationService="documentationService"
-    :inTabs="true"
+    isTabs
+    exportFileName="image-processor-logs"
+    :csvMapper="customColumnMapper"
   >
-    <template #default>
-      <PrimeButton
-        class="max-md:w-full w-fit"
-        severity="secondary"
-        label="Edge Application"
-        @click="goToEdgeApplication"
+    <template #header="{ exportTableCSV }">
+      <slot
+        name="header"
+        :downloadCSV="exportTableCSV"
       />
     </template>
-  </EmptyResultsBlock>
+  </ListTableBlock>
 </template>

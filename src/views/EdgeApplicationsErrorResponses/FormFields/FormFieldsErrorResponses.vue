@@ -3,7 +3,7 @@
   import FieldText from '@/templates/form-fields-inputs/fieldText'
   import PrimeButton from 'primevue/button'
   import Divider from 'primevue/divider'
-
+  import LabelBlock from '@/templates/label-block'
   import FieldNumber from '@/templates/form-fields-inputs/fieldNumber.vue'
   import FieldDropdown from '@/templates/form-fields-inputs/fieldDropdown'
   import InputText from 'primevue/inputtext'
@@ -164,7 +164,10 @@
       </Divider>
       <div class="flex flex-wrap gap-6">
         <div class="flex flex-col w-full sm:max-w-xs gap-2">
-          <label class="text-color text-base font-medium leading-5">Status Code *</label>
+          <LabelBlock
+            label="Status Code"
+            isRequired
+          />
           <span class="p-input-icon-right w-full flex max-w-lg flex-col items-start gap-2">
             <i class="pi pi-lock text-color-secondary" />
             <InputText
@@ -177,7 +180,8 @@
         </div>
         <div class="flex flex-col w-full sm:max-w-xs gap-2">
           <FieldNumber
-            label="Default Response TTL *"
+            label="Default Response TTL"
+            required
             :value="errorResponses[0].value.timeout"
             name="errorResponses[0].timeout"
             :min="0"
@@ -210,7 +214,9 @@
           <div class="flex flex-wrap gap-6">
             <div class="flex flex-col w-full sm:max-w-xs gap-2">
               <FieldDropdown
-                label="Status Code *"
+                label="Status Code"
+                :data-testid="`error-responses-form__error-response__${index}__status-code`"
+                required
                 :name="`errorResponses[${index}].code`"
                 :options="STATUS_CODE_OPTIONS"
                 optionLabel="name"
@@ -221,7 +227,8 @@
             </div>
             <div class="flex flex-col w-full sm:max-w-xs gap-2">
               <FieldNumber
-                label="Custom Response TTL *"
+                label="Custom Response TTL"
+                required
                 :value="errorResponses[index].value.timeout"
                 :name="`errorResponses[${index}].timeout`"
                 :min="0"
@@ -234,6 +241,7 @@
             <FieldText
               label="Page Path"
               placeholder="/path/error_page.html"
+              :data-testid="`error-responses-form__error-response__${index}__path`"
               :name="`errorResponses[${index}].uri`"
               :value="errorResponses[index].value.uri"
               description="Select an origin to customize the error page path."
@@ -242,6 +250,7 @@
           <div class="flex flex-col w-full sm:max-w-xs gap-2">
             <FieldNumber
               label="Response Status Code"
+              :data-testid="`error-responses-form__error-response__${index}__custom-status`"
               :value="errorResponses[index].value.customStatusCode"
               :name="`errorResponses[${index}].customStatusCode`"
               :min="100"
@@ -255,6 +264,7 @@
         <Divider />
         <PrimeButton
           @click="addErrorResponse"
+          data-testid="error-responses-form__add-button"
           label="Add Error Response"
           outlined
           icon="pi pi-plus-circle"
@@ -269,9 +279,11 @@
     <template #inputs>
       <div class="flex flex-col w-full sm:max-w-xs gap-2">
         <FieldDropdown
-          label="Origin *"
+          label="Origin"
+          required
           :options="originOptions"
           optionLabel="name"
+          data-testid="error-responses-form__origin"
           optionValue="originId"
           class="h-fit"
           name="originId"
