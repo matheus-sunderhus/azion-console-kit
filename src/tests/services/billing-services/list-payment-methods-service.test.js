@@ -81,8 +81,8 @@ describe('BillingServices', () => {
         id: fixtures.paymentMock.id,
         cardHolder: fixtures.paymentMock.card_holder,
         cardExpiration: {
-          expiringDate: '05/2030',
-          status: ''
+          tagProps: {},
+          text: '05/2030'
         },
         cardData: {
           cardBrand: 'visa',
@@ -93,14 +93,14 @@ describe('BillingServices', () => {
         isDefault: fixtures.paymentMockIsDefault.is_default,
         expiringDateByOrder: new Date('2030-05-01T00:00:00.000Z'),
         expiringDateSearch: '05/2030',
-        cardNumberSearch: fixtures.paymentMock.card_last_4_digits
+        cardNumberSearch: 'visa 4242 Default'
       },
       {
         id: fixtures.paymentMock.id,
         cardHolder: fixtures.paymentMock.card_holder,
         cardExpiration: {
-          expiringDate: '05/2019',
-          status: 'Expired'
+          tagProps: { severity: 'warning', value: 'Expired' },
+          text: '05/2019'
         },
         cardData: {
           cardBrand: 'visa',
@@ -111,7 +111,7 @@ describe('BillingServices', () => {
         isDefault: fixtures.paymentMock.is_default,
         expiringDateByOrder: new Date('2019-05-01T00:00:00.000Z'),
         expiringDateSearch: '05/2019',
-        cardNumberSearch: fixtures.paymentMock.card_last_4_digits
+        cardNumberSearch: 'visa 4242 '
       }
     ])
   })

@@ -165,7 +165,8 @@
     :editInDrawer="openEditDrawer"
     :isReorderAllEnabled="true"
     @on-load-data="handleLoadData"
-    emptyListMessage="No rules have been created."
+    emptyListMessage="No rules found."
+    addButtonLabel="Rules Engine"
     :actions="actions"
     isTabs
   >
@@ -191,6 +192,7 @@
         severity="secondary"
         icon="pi pi-plus"
         label="Rules Engine"
+        data-testid="create_Rules Engine_button"
         @click="openCreateDrawer"
       />
     </template>

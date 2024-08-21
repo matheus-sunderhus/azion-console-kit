@@ -9,7 +9,8 @@ import {
   openAzionBlog,
   openAzionDiscord,
   openAzionGithub,
-  openAzionX
+  openAzionX,
+  openShowMorePlan
 } from './azion-documentation-window-opener'
 import { azionPrivacyPolicyWindowOpener } from './azion-privacy-policy-opener'
 import { azionOnboardingWindowOpener } from './azion-onboarding-window-opener'
@@ -24,10 +25,15 @@ import { metricsPlaygroundOpener } from './metrics-playground-opener'
 import { parseCamelToSnake, parseSnakeToCamel } from './parse-api-body'
 import { themeSelect } from './theme-select'
 import { convertValueToDate, convertDateToLocalTimezone, formatDateToUS } from './convert-date'
+import { formatCurrencyString, formatUnitValue } from './convert-number'
 import { windowOpen } from './window-open'
 import { getVulcanPresets } from './get-vulcan-presets'
 import { goToClassicInterface } from './go-to-classic-interface'
 import { removeHtmlTagFromText } from './remove-html-tag-from-text'
+import { getCsvCellContentFromRowData } from './get-csv-cell-content-from-row-data'
+import { useRouteFilterManager } from './hash-route.js'
+import { openGraphQlPlayground } from './open-graphql-playground.js'
+import { eventsPlaygroundOpener } from './events-playground-opener'
 
 export {
   InviteSession,
@@ -61,5 +67,12 @@ export {
   windowOpen,
   getVulcanPresets,
   goToClassicInterface,
-  formatDateToUS
+  formatDateToUS,
+  formatCurrencyString,
+  formatUnitValue,
+  openShowMorePlan,
+  getCsvCellContentFromRowData,
+  useRouteFilterManager,
+  openGraphQlPlayground,
+  eventsPlaygroundOpener
 }

@@ -5,6 +5,7 @@
     data-testid="data-table-container"
   >
     <DataTable
+      ref="dataTableRef"
       class="overflow-clip rounded-md"
       v-if="!isLoading"
       @rowReorder="onRowReorder"
@@ -12,47 +13,69 @@
       removableSort
       :value="data"
       dataKey="id"
-      selectionMode="single"
       @row-click="editItemSelected"
+      rowHover
       v-model:filters="filters"
       :paginator="showPagination"
       :rowsPerPageOptions="[10, 20, 50, 100]"
       :rows="MINIMUM_OF_ITEMS_PER_PAGE"
       :globalFilterFields="filterBy"
+      v-model:selection="selectedItems"
+      :exportFilename="exportFileName"
+      :exportFunction="exportFunctionMapper"
       :loading="isLoading"
       data-testid="data-table"
     >
-      <template #header>
-        <div
-          class="flex flex-wrap justify-between gap-2 w-full"
-          data-testid="data-table-header"
+      <template
+        #header
+        v-if="!props.hiddenHeader"
+      >
+        <slot
+          name="header"
+          :exportTableCSV="handleExportTableDataToCSV"
         >
-          <span
-            class="flex flex-row p-input-icon-left items-center max-sm:w-full"
-            data-testid="data-table-search"
+          <div
+            class="flex flex-wrap justify-between gap-2 w-full"
+            data-testid="data-table-header"
           >
-            <i class="pi pi-search" />
-            <InputText
-              class="h-8 w-full md:min-w-[320px]"
-              v-model.trim="filters.global.value"
-              data-testid="data-table-search-input"
-              placeholder="Search"
-            />
-          </span>
-          <slot
-            name="addButton"
-            data-testid="data-table-add-button"
-          >
+            <span
+              class="flex flex-row p-input-icon-left items-center max-sm:w-full"
+              data-testid="data-table-search"
+            >
+              <i class="pi pi-search" />
+              <InputText
+                class="h-2 w-full md:min-w-[20rem]"
+                v-model.trim="filters.global.value"
+                data-testid="data-table-search-input"
+                placeholder="Search"
+              />
+            </span>
+
             <PrimeButton
-              class="max-sm:w-full"
-              @click="navigateToAddPage"
-              icon="pi pi-plus"
-              :data-testid="`create_${addButtonLabel}_button`"
-              :label="addButtonLabel"
-              v-if="addButtonLabel"
+              v-if="hasExportToCsvMapper"
+              @click="handleExportTableDataToCSV"
+              outlined
+              class="max-sm:w-full ml-auto"
+              icon="pi pi-download"
+              :data-testid="`export_button`"
+              v-tooltip.bottom="{ value: 'Export to CSV', showDelay: 200 }"
             />
-          </slot>
-        </div>
+
+            <slot
+              name="addButton"
+              data-testid="data-table-add-button"
+            >
+              <PrimeButton
+                class="max-sm:w-full"
+                @click="navigateToAddPage"
+                icon="pi pi-plus"
+                :data-testid="`create_${addButtonLabel}_button`"
+                :label="addButtonLabel"
+                v-if="addButtonLabel"
+              />
+            </slot>
+          </div>
+        </slot>
       </template>
 
       <Column
@@ -63,12 +86,19 @@
       />
 
       <Column
+        v-if="showSelectionMode"
+        selectionMode="multiple"
+        headerStyle="width: 3rem"
+      />
+
+      <Column
         sortable
         v-for="col of selectedColumns"
         :key="col.field"
         :field="col.field"
         :header="col.header"
         :sortField="col?.sortField"
+        class="hover:cursor-pointer"
         data-testid="data-table-column"
       >
         <template #body="{ data: rowData }">
@@ -76,13 +106,13 @@
             <div
               v-html="rowData[col.field]"
               :data-testid="`list-table-block__column__${col.field}__row`"
-            ></div>
+            />
           </template>
           <template v-else>
             <component
               :is="col.component(extractFieldValue(rowData, col.field))"
               :data-testid="`list-table-block__column__${col.field}__row`"
-            ></component>
+            />
           </template>
         </template>
       </Column>
@@ -131,16 +161,19 @@
             </OverlayPanel>
           </div>
         </template>
-        <template #body="{ data: rowData }">
+        <template
+          #body="{ data: rowData }"
+          v-if="isRenderActions"
+        >
           <div
             class="flex justify-end"
-            v-if="!isRenderActions"
+            v-if="isRenderOneOption"
             data-testid="data-table-actions-column-body-action"
           >
             <PrimeButton
               size="small"
-              :icon="getActionIcon"
               outlined
+              v-bind="optionsOneAction(rowData)"
               @click="executeCommand(rowData)"
               class="cursor-pointer table-button"
               data-testid="data-table-actions-column-body-action-button"
@@ -148,7 +181,7 @@
           </div>
           <div
             class="flex justify-end"
-            v-if="isRenderActions"
+            v-else
             data-testid="data-table-actions-column-body-actions"
           >
             <PrimeMenu
@@ -157,6 +190,11 @@
               v-bind:model="actionOptions(rowData)"
               :popup="true"
               data-testid="data-table-actions-column-body-actions-menu"
+              :pt="{
+                menuitem: ({ context }) => ({
+                  'data-testid': `data-table__actions-menu-item__${context.item?.label}-button`
+                })
+              }"
             />
             <PrimeButton
               v-tooltip.top="{ value: 'Actions', showDelay: 200 }"
@@ -175,11 +213,13 @@
           name="noRecordsFound"
           data-testid="data-table-empty-content"
         >
-          <div
-            class="my-4 flex flex-col gap-3 justify-center items-start"
-            data-testid="list-table-block__empty-message"
-          >
-            <p class="text-md font-normal text-secondary">{{ emptyListMessage }}</p>
+          <div class="my-4 flex flex-col gap-3 justify-center items-start">
+            <p
+              class="text-md font-normal text-secondary"
+              data-testid="list-table-block__empty-message__text"
+            >
+              {{ emptyListMessage }}
+            </p>
           </div>
         </slot>
       </template>
@@ -193,32 +233,37 @@
       }"
       data-testid="data-table-skeleton"
     >
-      <template #header>
-        <div
-          class="flex flex-wrap justify-between gap-2 w-full"
-          data-testid="data-table-skeleton-header"
-        >
-          <span
-            class="flex flex-row h-8 p-input-icon-left max-sm:w-full"
-            data-testid="data-table-skeleton-search"
+      <template
+        #header
+        v-if="!props.hiddenHeader"
+      >
+        <slot name="header">
+          <div
+            class="flex flex-wrap justify-between gap-2 w-full"
+            data-testid="data-table-skeleton-header"
           >
-            <i class="pi pi-search" />
-            <InputText
-              class="w-full h-8 md:min-w-[320px]"
-              v-model="filters.global.value"
-              placeholder="Search"
-              data-testid="data-table-skeleton-search-input"
+            <span
+              class="flex flex-row h-8 p-input-icon-left max-sm:w-full"
+              data-testid="data-table-skeleton-search"
+            >
+              <i class="pi pi-search" />
+              <InputText
+                class="w-full h-8 md:min-w-[20rem]"
+                v-model="filters.global.value"
+                placeholder="Search"
+                data-testid="data-table-skeleton-search-input"
+              />
+            </span>
+            <PrimeButton
+              class="max-sm:w-full"
+              @click="navigateToAddPage"
+              icon="pi pi-plus"
+              :label="addButtonLabel"
+              v-if="addButtonLabel"
+              data-testid="data-table-skeleton-add-button"
             />
-          </span>
-          <PrimeButton
-            class="max-sm:w-full"
-            @click="navigateToAddPage"
-            icon="pi pi-plus"
-            :label="addButtonLabel"
-            v-if="addButtonLabel"
-            data-testid="data-table-skeleton-add-button"
-          />
-        </div>
+          </div>
+        </slot>
       </template>
       <Column
         sortable
@@ -246,20 +291,32 @@
   import PrimeMenu from 'primevue/menu'
   import OverlayPanel from 'primevue/overlaypanel'
   import Skeleton from 'primevue/skeleton'
-  import { useToast } from 'primevue/usetoast'
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import DeleteDialog from './dialog/delete-dialog.vue'
   import { useDialog } from 'primevue/usedialog'
+  import { useToast } from 'primevue/usetoast'
+  import { getCsvCellContentFromRowData } from '@/helpers'
 
   defineOptions({ name: 'list-table-block-new' })
 
-  const emit = defineEmits(['on-load-data', 'on-before-go-to-add-page', 'on-before-go-to-edit'])
+  const emit = defineEmits([
+    'on-load-data',
+    'on-before-go-to-add-page',
+    'on-before-go-to-edit',
+    'update:selectedItensData'
+  ])
 
   const props = defineProps({
+    hiddenHeader: {
+      type: Boolean
+    },
     columns: {
       type: Array,
       default: () => [{ field: 'name', header: 'Name' }]
+    },
+    lazyLoad: {
+      type: Boolean
     },
     isGraphql: {
       type: Boolean
@@ -296,17 +353,32 @@
     },
     actions: {
       type: Array,
-      required: true
+      default: () => []
     },
     isTabs: {
       type: Boolean,
       default: false
+    },
+    showSelectionMode: {
+      type: Boolean
+    },
+    selectedItensData: {
+      type: Array,
+      default: () => []
+    },
+    csvMapper: {
+      type: Function
+    },
+    exportFileName: {
+      type: String
     }
   })
 
   const MINIMUM_OF_ITEMS_PER_PAGE = 10
-
+  const isRenderActions = !!props.actions?.length
+  const isRenderOneOption = props.actions?.length === 1
   const selectedId = ref(null)
+  const dataTableRef = ref(null)
   const filters = ref({
     global: { value: '', matchMode: FilterMatchMode.CONTAINS }
   })
@@ -315,28 +387,42 @@
   const selectedColumns = ref([])
   const columnSelectorPanel = ref(null)
   const menuRef = ref({})
+  const hasExportToCsvMapper = ref(!!props.csvMapper)
 
   const dialog = useDialog()
-  const toast = useToast()
   const router = useRouter()
+  const toast = useToast()
+
+  const selectedItems = computed({
+    get: () => {
+      return props.selectedItensData
+    },
+    set: (value) => {
+      emit('update:selectedItensData', value)
+    }
+  })
 
   onMounted(() => {
-    loadData({ page: 1 })
+    if (!props.lazyLoad) {
+      loadData({ page: 1 })
+    }
     selectedColumns.value = props.columns
   })
 
-  const showToast = (severity, detail) => {
-    if (!detail) return
-    const options = {
-      closable: true,
-      severity,
-      summary: severity,
-      detail
+  /**
+   * @param {import('primevue/datatable').DataTableExportFunctionOptions} rowData
+   */
+  const exportFunctionMapper = (rowData) => {
+    if (!hasExportToCsvMapper.value) {
+      return
     }
-
-    toast.add(options)
+    const columnMapper = props.csvMapper(rowData)
+    return getCsvCellContentFromRowData({ columnMapper, rowData })
   }
 
+  const handleExportTableDataToCSV = () => {
+    dataTableRef.value.exportCSV()
+  }
   const toggleColumnSelector = (event) => {
     columnSelectorPanel.value.toggle(event)
   }
@@ -353,6 +439,7 @@
     const createActionOption = (action) => {
       return {
         ...action,
+        disabled: action.disabled && action.disabled(rowData),
         command: () => {
           switch (action.type) {
             case 'dialog':
@@ -389,19 +476,25 @@
     return actions
   }
 
-  const loadData = async ({ page }) => {
-    try {
-      isLoading.value = true
-
-      const response = props.isGraphql
-        ? await props.listService()
-        : await props.listService({ page })
-      data.value = response
-    } catch (error) {
-      data.value = []
-      showToast('error', error)
-    } finally {
-      isLoading.value = false
+  const loadData = async ({ page, ...query }) => {
+    if (props.listService) {
+      try {
+        isLoading.value = true
+        const response = props.isGraphql
+          ? await props.listService()
+          : await props.listService({ page, ...query })
+        data.value = response
+      } catch (error) {
+        toast.add({
+          closable: true,
+          severity: 'error',
+          summary: 'error',
+          detail: 'Error fetching data:',
+          error
+        })
+      } finally {
+        isLoading.value = false
+      }
     }
   }
 
@@ -419,7 +512,7 @@
   }
 
   const editItemSelected = ({ data: item }) => {
-    emit('on-before-go-to-edit')
+    emit('on-before-go-to-edit', item)
     if (props.editInDrawer) {
       props.editInDrawer(item)
     } else if (props.enableEditClick) {
@@ -428,12 +521,20 @@
   }
 
   const executeCommand = (rowData) => {
-    const { command } = actionOptions(rowData)[0]
-    command()
+    const [firstAction] = actionOptions(rowData)
+    firstAction?.command()
   }
 
-  const reload = () => {
-    loadData({ page: 1 })
+  const optionsOneAction = (rowData) => {
+    const [firstAction] = actionOptions(rowData)
+    return {
+      icon: firstAction?.icon,
+      disabled: firstAction?.disabled
+    }
+  }
+
+  const reload = (query = {}) => {
+    loadData({ page: 1, ...query })
   }
 
   defineExpose({ reload })
@@ -459,14 +560,6 @@
 
   const showPagination = computed(() => {
     return data.value.length > MINIMUM_OF_ITEMS_PER_PAGE
-  })
-
-  const isRenderActions = computed(() => {
-    return props.actions && props.actions.length > 1
-  })
-
-  const getActionIcon = computed(() => {
-    return props.actions[0].icon
   })
 
   watch(data, (currentState) => {

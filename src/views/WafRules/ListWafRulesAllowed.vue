@@ -1,5 +1,5 @@
 <template>
-  <ListTableNoHeaderBlock
+  <ListTableBlock
     ref="listAllowedRef"
     v-if="hasContentToList"
     addButtonLabel="Allowed Rule"
@@ -16,9 +16,10 @@
         icon="pi pi-plus"
         label="Allowed Rule"
         @click="openCreateDrawerWafAllowed"
+        data-testid="create_Allowed Rule_button"
       />
     </template>
-  </ListTableNoHeaderBlock>
+  </ListTableBlock>
 
   <EmptyResultsBlock
     v-else
@@ -42,6 +43,7 @@
         icon="pi pi-plus"
         label="Allowed Rule"
         @click="openCreateDrawerWafAllowed"
+        data-testid="create_Allowed Rule_button"
       />
     </template>
     <template #illustration>
@@ -87,7 +89,7 @@
   import { columnBuilder } from '@/templates/list-table-block/columns/column-builder'
   import CreateDrawerBlock from '@templates/create-drawer-block'
   import EditDrawerBlock from '@templates/edit-drawer-block'
-  import ListTableNoHeaderBlock from '@templates/list-table-block'
+  import ListTableBlock from '@templates/list-table-block'
   import PrimeButton from 'primevue/button'
   import { ref } from 'vue'
   import { useRoute } from 'vue-router'

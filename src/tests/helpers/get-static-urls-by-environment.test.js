@@ -27,31 +27,26 @@ const scenarios = [
   },
   {
     section: 'billing',
-    env: 'development',
-    expected: 'https://stage-console.azion.com/billing/payment?paymentSession=true'
-  },
-  {
-    section: 'billing',
     env: 'stage',
-    expected: 'https://stage-console.azion.com/billing/payment?paymentSession=true'
+    expected: 'https://stage-manager.azion.com/billing-subscriptions'
   },
   {
     section: 'billing',
     env: 'production',
-    expected: 'https://console.azion.com/billing/payment?paymentSession=true'
+    expected: 'https://manager.azion.com/billing-subscriptions'
   },
   {
-    section: 'playground',
+    section: 'playgroundMetrics',
     env: 'development',
     expected: 'https://stage-manager.azion.com/metrics/graphql'
   },
   {
-    section: 'playground',
+    section: 'playgroundMetrics',
     env: 'stage',
     expected: 'https://stage-manager.azion.com/metrics/graphql'
   },
   {
-    section: 'playground',
+    section: 'playgroundMetrics',
     env: 'production',
     expected: 'https://manager.azion.com/metrics/graphql'
   },
@@ -80,7 +75,7 @@ describe('getStaticUrlsByEnvironment', () => {
   it.each(scenarios)(
     'should return the static URL for the $section in the $env environment',
     ({ section, env, expected }) => {
-      vi.stubEnv('MODE', env)
+      vi.stubEnv('VITE_ENVIRONMENT', env)
 
       const { sut } = makeSut()
 

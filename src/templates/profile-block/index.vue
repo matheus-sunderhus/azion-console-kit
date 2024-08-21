@@ -87,8 +87,9 @@
           <span
             class="text-sm"
             data-testid="profile-block__theme__label"
-            >Theme</span
           >
+            Theme
+          </span>
           <Dropdown
             data-testid="profile-block__theme__options"
             appendTo="self"
@@ -290,7 +291,6 @@
 </template>
 
 <script setup>
-  import { getStaticUrlsByEnvironment } from '@/helpers'
   import { useAccountStore } from '@/stores/account'
   import { computed, inject, ref, watch } from 'vue'
 
@@ -321,10 +321,7 @@
     },
     {
       label: 'Billing & Subscriptions',
-      command: () => {
-        const billingUrl = getStaticUrlsByEnvironment('billing')
-        window.open(billingUrl, '_blank')
-      }
+      to: '/billing'
     },
     {
       label: 'Credentials',

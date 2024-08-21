@@ -20,15 +20,22 @@ const convertStringToDate = (dateString) => {
   return dateValue
 }
 
+const getTagProps = (card) => {
+  const dateExpired = getExpiredDate(card.card_expiration_month, card.card_expiration_year)
+  return dateExpired ? { severity: 'warning', value: dateExpired } : {}
+}
+
 const adapt = (httpResponse) => {
-  if (!httpResponse.body.results) {
+  const { body, statusCode } = httpResponse
+
+  if (!body.results?.length) {
     return {
       body: [],
-      statusCode: httpResponse.statusCode
+      statusCode: statusCode
     }
   }
 
-  const responseDataSorted = httpResponse.body.results.sort(
+  const responseDataSorted = body.results.sort(
     (currentCard, nextCard) => nextCard.is_default - currentCard.is_default
   )
 
@@ -36,12 +43,14 @@ const adapt = (httpResponse) => {
     const cardDate = formatDateMonthAndYear(card.card_expiration_month, card.card_expiration_year)
     const statusCard = card.is_default ? 'Default' : ''
     const typeCard = card.card_brand?.toLowerCase()
+    const tagProps = getTagProps(card)
+
     return {
       id: card.id,
       cardHolder: card.card_holder,
       cardExpiration: {
-        expiringDate: cardDate,
-        status: getExpiredDate(card.card_expiration_month, card.card_expiration_year)
+        text: cardDate,
+        tagProps
       },
       cardData: {
         cardNumber: `Ending in ${card.card_last_4_digits}`,
@@ -51,13 +60,13 @@ const adapt = (httpResponse) => {
       },
       expiringDateByOrder: convertStringToDate(cardDate),
       expiringDateSearch: cardDate,
-      cardNumberSearch: card.card_last_4_digits,
+      cardNumberSearch: `${typeCard} ${card.card_last_4_digits} ${statusCard}`,
       isDefault: card.is_default
     }
   })
 
   return {
     body: parseBilling,
-    statusCode: httpResponse.statusCode
+    statusCode: statusCode
   }
 }

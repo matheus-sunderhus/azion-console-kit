@@ -1,5 +1,6 @@
 <template>
   <ListTableBlock
+    ref="listPaymentMethodsRef"
     v-if="hasContentToList"
     :enableEditClick="false"
     isTabs
@@ -13,13 +14,19 @@
       <div class="flex gap-4">
         <PrimeButton
           icon="pi pi-plus"
-          label="Add Credit"
+          label="Credit"
+          size="small"
+          @click="drawersMethods.openDrawerAddCredit"
+          data-testid="payment-methods__add-credit__button"
           outlined
         />
         <PrimeButton
           icon="pi pi-plus"
+          data-testid="payment-methods__add-payment-method__button"
           severity="secondary"
-          label="Add Payment Method"
+          size="small"
+          @click="drawersMethods.openDrawerPaymentMethod"
+          label="Payment Method"
         />
       </div>
     </template>
@@ -29,7 +36,8 @@
     title="No payment method has been added"
     description="Click the button below to add a payment method."
     createButtonLabel="Payment Method"
-    :inTabs="true"
+    inTabs
+    @click-to-create="drawersMethods.openDrawerPaymentMethod"
     :documentationService="props.documentPaymentMethodService"
   >
     <template #illustration>
@@ -46,8 +54,8 @@
   import PrimeButton from 'primevue/button'
   import { useToast } from 'primevue/usetoast'
 
-  import { ref } from 'vue'
-
+  import { ref, inject } from 'vue'
+  const emit = defineEmits(['update-credit-event'])
   const hasContentToList = ref(true)
   const toast = useToast()
 
@@ -70,10 +78,15 @@
     }
   })
 
+  const listPaymentMethodsRef = ref('')
+
+  const drawersMethods = inject('drawersMethods')
+
   const paymentsColumns = ref([
     {
       field: 'cardData',
       header: 'Card Number',
+      sortField: 'cardNumberSearch',
       filterPath: 'cardNumberSearch',
       type: 'component',
       component: (columnData) =>
@@ -86,12 +99,12 @@
     },
     {
       field: 'cardExpiration',
-      header: 'Expires in',
+      header: 'Expiration Date',
       sortField: 'expiringDateByOrder',
       filterPath: 'expiringDateSearch',
       type: 'component',
       component: (columnData) =>
-        columnBuilder({ data: columnData, columnAppearance: 'credit-expiration-column' })
+        columnBuilder({ data: columnData, columnAppearance: 'text-with-tag' })
     }
   ])
 
@@ -115,6 +128,8 @@
     try {
       const feedback = await props.setAsDefaultPaymentService(payment.id)
       showToast('success', feedback)
+      emit('update-credit-event')
+      reloadList()
     } catch (error) {
       showToast('error', error)
     }
@@ -132,8 +147,21 @@
     {
       label: 'Delete',
       type: 'delete',
+      icon: 'pi pi-fw pi-trash',
       title: 'Payment Method',
       service: props.deletePaymentService
     }
   ])
+
+  const reloadList = () => {
+    if (hasContentToList.value) {
+      listPaymentMethodsRef.value.reload()
+      return
+    }
+    hasContentToList.value = true
+  }
+
+  defineExpose({
+    reloadList
+  })
 </script>

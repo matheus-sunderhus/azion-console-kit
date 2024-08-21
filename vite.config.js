@@ -4,11 +4,11 @@ import process from 'process'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import { defineConfig, loadEnv } from 'vite'
-import istanbul from 'vite-plugin-istanbul';
+import istanbul from 'vite-plugin-istanbul'
 
 const getConfig = () => {
   const env = loadEnv('development', process.cwd())
-  const URLStartPrefix = env.VITE_ENVIRONMENT === 'PRODUCTION' ? 'https://' : 'https://stage-'
+  const URLStartPrefix = env.VITE_ENVIRONMENT === 'production' ? 'https://' : 'https://stage-'
 
   return {
     plugins: [
@@ -42,13 +42,17 @@ const getConfig = () => {
         '^/api/vcs': {
           target: `${URLStartPrefix}vcs-api.azion.net/`,
           changeOrigin: true,
-          rewrite: (path) =>
-            path.replace(/^\/api\/vcs/, '/vcs/api')
+          rewrite: (path) => path.replace(/^\/api\/vcs/, '/vcs/api')
         },
         '/graphql/cities': {
           target: `${URLStartPrefix}cities.azion.com`,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/graphql\/cities/, '/graphql')
+        },
+        '/graphql/billing': {
+          target: `${URLStartPrefix}manager.azion.com`,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/graphql\/billing/, '/billing/graphql')
         },
         '^/api/(account|user|token|switch-account|auth|password|totp)|^/logout': {
           target: `${URLStartPrefix}sso.azion.com`,

@@ -19,7 +19,7 @@
       type: Array,
       required: true
     },
-    edgeApps: {
+    edgeApplicationsData: {
       type: Array,
       required: true
     },
@@ -27,6 +27,9 @@
       type: Boolean,
       required: false,
       default: false
+    },
+    loadingEdgeApplications: {
+      type: Boolean
     }
   })
 
@@ -52,7 +55,7 @@
   })
 
   const edgeApplicationOptions = computed(() => {
-    return props.edgeApps.map((edgeApp) => ({ name: edgeApp.name, value: edgeApp.id }))
+    return props.edgeApplicationsData.map((edgeApp) => ({ name: edgeApp.name, value: edgeApp.id }))
   })
 
   const edgeCertificatesOptions = computed(() => {
@@ -89,6 +92,10 @@
       inputValue: 'permissive'
     }
   ])
+
+  const isLoadingEdgeApplications = computed(() => {
+    return props.loadingEdgeApplications
+  })
 </script>
 
 <template>
@@ -129,6 +136,7 @@
             <i class="pi pi-lock" />
             <InputText
               id="domainName"
+              data-testid="edit-domains-form__domain-field__input"
               v-model="domainName"
               type="text"
               class="flex flex-col w-full"
@@ -137,9 +145,9 @@
             />
           </span>
           <PrimeButton
-            data-testid="domains-form__copy-domain__button"
             icon="pi pi-clone"
             outlined
+            data-testid="edit-domains-form__domain-field__copy-button"
             type="button"
             aria-label="Copy to Clipboard"
             label="Copy to Clipboard"
@@ -162,8 +170,8 @@
           required
           name="edgeApplication"
           :options="edgeApplicationOptions"
-          :loading="!edgeApplicationOptions.length"
-          :disabled="!edgeApplicationOptions.length"
+          :loading="isLoadingEdgeApplications"
+          :disabled="isLoadingEdgeApplications"
           optionLabel="name"
           optionValue="value"
           :value="edgeApplication"
@@ -185,6 +193,7 @@
       <div class="flex flex-col sm:max-w-lg w-full gap-2">
         <FieldTextArea
           label="CNAME"
+          data-testid="domains-form__cnames-field"
           :required="cnameAccessOnly"
           name="cnames"
           rows="2"
@@ -260,6 +269,7 @@
   <form-horizontal title="Status">
     <template #inputs>
       <FieldSwitchBlock
+        data-testid="edit-domains-form__active-field"
         nameField="active"
         name="active"
         auto

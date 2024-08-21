@@ -39,7 +39,7 @@
     },
     {
       label: 'Billing & Subscriptions',
-      to: '/billing-subscriptions'
+      to: '/billing'
     },
     {
       label: 'Credentials',
