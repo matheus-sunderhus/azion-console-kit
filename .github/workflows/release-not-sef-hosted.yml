@@ -1,4 +1,4 @@
-name: Run and Publish Release
+name: Run and Publish Release - not self-hosted
 
 on:
   push:
@@ -21,7 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
       
       - name: Install packages
         run: yarn ci
